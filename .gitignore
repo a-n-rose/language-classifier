@@ -1,0 +1,9 @@
+env/
+*test/
+*.db
+*.wav
+*.txt
+*.csv
+*.csv#
+*.directory
+*__pycache__/

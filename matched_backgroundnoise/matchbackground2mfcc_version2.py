@@ -78,7 +78,7 @@ def parser(wavefile,num_mfcc,env_noise=None):
     except ValueError as ve:
         logging.exception("Error occured ({}) with the file {}".format(ve,wavefile))
     
-    return None, None
+    return None, None, None
 
 
 def insert_data(filename,feature, sr, noise_scale,label):

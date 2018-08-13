@@ -35,7 +35,8 @@ import prep_noise as prep_data
 #global variables
 database = 'sp_mfcc.db'
 noisegroup = 'matched' #other groups: 'none' and 'random'
-environment_noise = 'background_noise.wav'
+#if no noise, environment_noise = None
+environment_noise = 'background_noise.wav' #None (see note above)
 #specify number of mfccs --> reflects the number of columns
 #this needs to match the others in the database, therefore should be changed with caution
 num_mfcc = 40
@@ -54,7 +55,7 @@ def parser(wavefile,num_mfcc,env_noise=None):
         y = prep_data.normalize(y)
         
         rand_scale = 0.0
-        if env_noise:
+        if env_noise.any() != None:
             #at random apply varying amounts of environment noise
             rand_scale = random.choice([0.0,0.25,0.5,0.75,1.0,1.25])
             logging.info("Scale of noise applied: {}".format(rand_scale))
@@ -201,10 +202,11 @@ if __name__ == '__main__':
                 wavefiles.append(wav)
             if len(wavefiles) > 0:
                 for v in range(len(wavefiles)):
-                    wav = wavefiles[i]
+                    wav = wavefiles[v]
                     feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
                     filename = Path(wav).name
                     insert_data(filename,feature, sr, noise_scale,label)
+                    conn.commit()
                     progress_message = "Progress: \nfinished processing {} \n{} % wavefiles completed. \nDirectories processed: {}/{}".format(filename,(v+1/len(wavefiles)*100),j+1,len(dir_list))
                     print(progress_message)
                     logging.info(progress_message)
@@ -223,21 +225,23 @@ if __name__ == '__main__':
                     extract(tgz_list[t], extract_path = '/tmp/audio')
                     filename = os.path.splitext(tgz_list[t])[0]
                     waves_list = []
-                    for wav in glob.glob('/tmp/audio/**/*.wav',recursive=True):
-                        waves_list.append(wav)
+                    for w in glob.glob('/tmp/audio/**/*.wav',recursive=True):
+                        waves_list.append(w)
                     if len(waves_list) > 0:
                         for k in range(len(waves_list)):
+                            wav = waves_list[k]
                             feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
                             wav_name = str(Path(wav).name)
                             insert_data(filename+'_'+wav_name,feature, sr, noise_scale,label)
-                            update = "Progress: \nwavefile {} ({}) out of {}\ntgz file {} ({}) out of {}".format(k+1,str(Path(waves_list[k]).name),len(waves_list),i+1,filename,len(files_list))
+                            conn.commit()
+                            update = "Progress: \nwavefile {} ({}) out of {}\ntgz file {} ({}) out of {}".format(k+1,wav_name,len(waves_list),t+1,filename,len(tgz_list))
                             percentage = "{}% through tgz file {}".format(((k+1)/(len(waves_list)))*100,filename)
                         
                             logging.info(update)
                             print(percentage)
                             print(update)
                     else:
-                        update_nowave_inzip = "No .wav files found in zipfile: {}".format(files_list[i])
+                        update_nowave_inzip = "No .wav files found in zipfile: {}".format(tgz_list[t])
                         logging.info(update_nowave_inzip)
                         print(update_nowave_inzip)
                     shutil.rmtree('/tmp/audio/'+filename)
@@ -264,6 +268,3 @@ if __name__ == '__main__':
     finally:
         if conn:
             conn.close()
-
-            
-            

@@ -33,7 +33,7 @@ import prep_noise as prep_data
 
 
 #global variables
-database = 'sp_mfcc.db'
+database = 'sp_mfcc_test2.db'
 noisegroup = 'matched' #other groups: 'none' and 'random'
 environment_noise = 'background_noise.wav'
 #specify number of mfccs --> reflects the number of columns

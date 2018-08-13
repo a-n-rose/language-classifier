@@ -28,7 +28,7 @@ import logging.handlers
 logger = logging.getLogger(__name__)
 from pympler import tracker
 
-import prep_noise as prep_noise
+import prep_noise as prep_data
 
 
 
@@ -59,27 +59,29 @@ def check_filetype(audio_file):
     else:
         return None, None
             
-def parser(wavefile,num_mfcc,env_noise):
+def parser(wavefile,num_mfcc,env_noise=None):
     try:
         y, sr = librosa.load(wavefile, res_type= 'kaiser_fast')
-        y = prep_noise.normalize(y)
+        y = prep_data.normalize(y)
         
-        #at random apply varying amounts of environment noise
-        rand_scale = random.choice([0.0,0.25,0.5,0.75,1.0,1.25])
-        logging.info("Scale of noise applied: {}".format(rand_scale))
-        if rand_scale:
-            #apply *known* environemt noise to signal
-            total_length = len(y)/sr
-            envnoise_normalized = prep_noise.normalize(env_noise)
-            envnoise_scaled = prep_noise.scale_noise(envnoise_normalized,rand_scale)
-            envnoise_matched = prep_noise.match_length(envnoise_scaled,sr,total_length)
-            if len(envnoise_matched) != len(y):
-                diff = int(len(y) - len(envnoise_matched))
-                if diff < 0:
-                    envnoise_matched = envnoise_matched[:diff]
-                else:
-                    envnoise_matched = np.append(envnoise_matched,np.zeros(diff,))
-            y += envnoise_matched
+        rand_scale = 0.0
+        if env_noise:
+            #at random apply varying amounts of environment noise
+            rand_scale = random.choice([0.0,0.25,0.5,0.75,1.0,1.25])
+            logging.info("Scale of noise applied: {}".format(rand_scale))
+            if rand_scale:
+                #apply *known* environemt noise to signal
+                total_length = len(y)/sr
+                envnoise_normalized = prep_data.normalize(env_noise)
+                envnoise_scaled = prep_data.scale_noise(envnoise_normalized,rand_scale)
+                envnoise_matched = prep_data.match_length(envnoise_scaled,sr,total_length)
+                if len(envnoise_matched) != len(y):
+                    diff = int(len(y) - len(envnoise_matched))
+                    if diff < 0:
+                        envnoise_matched = envnoise_matched[:diff]
+                    else:
+                        envnoise_matched = np.append(envnoise_matched,np.zeros(diff,))
+                y += envnoise_matched
         mfccs = librosa.feature.mfcc(y, sr, n_mfcc=num_mfcc,hop_length=int(0.010*sr),n_fft=int(0.025*sr))
         return mfccs, sr, rand_scale
     except EOFError as error:
@@ -87,7 +89,7 @@ def parser(wavefile,num_mfcc,env_noise):
     except ValueError as ve:
         logging.exception("Error occured ({}) with the file {}".format(ve,wavefile))
     
-    return None, None
+    return None, None, None
 
 
 def insert_data(filename,feature, sr, noise_scale,label):
@@ -172,10 +174,12 @@ if __name__ == '__main__':
         c = conn.cursor()
 
         #load environment noise to be added to training data
-        env_noise = librosa.load(environment_noise)[0]
+        if environment_noise:
+            env_noise = librosa.load(environment_noise)[0]
+        else:
+            env_noise = None
 
         prog_start = time.time()
-        #logging.info(label)
         logging.info(prog_start)
         columns = list((range(0,num_mfcc)))
         column_type = []

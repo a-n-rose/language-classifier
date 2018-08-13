@@ -28,7 +28,7 @@ import logging.handlers
 logger = logging.getLogger(__name__)
 from pympler import tracker
 
-import prep_noise as prep_noise
+import prep_noise as prep_data
 
 
 
@@ -47,39 +47,30 @@ def extract(tar_url, extract_path='.'):
         tar.extract(item, extract_path)
         if item.name.find(".tgz") != -1 or item.name.find(".tar") != -1:
             extract(item.name, "./" + item.name[:item.name.rfind('/')])
-        
-def check_filetype(audio_file):
-    fileinfo = os.path.splitext(audio_file)
-    filename,filetype = fileinfo[0],fileinfo[-1]
-    if filetype.lower() == '.tgz':
-        extract(audio_file, extract_path = '/tmp/audio')
-        return filename, True
-    elif filetype.lower() == '.wav':
-        return filename, False
-    else:
-        return None, None
             
-def parser(wavefile,num_mfcc,env_noise):
+def parser(wavefile,num_mfcc,env_noise=None):
     try:
         y, sr = librosa.load(wavefile, res_type= 'kaiser_fast')
-        y = prep_noise.normalize(y)
+        y = prep_data.normalize(y)
         
-        #at random apply varying amounts of environment noise
-        rand_scale = random.choice([0.0,0.25,0.5,0.75,1.0,1.25])
-        logging.info("Scale of noise applied: {}".format(rand_scale))
-        if rand_scale:
-            #apply *known* environemt noise to signal
-            total_length = len(y)/sr
-            envnoise_normalized = prep_noise.normalize(env_noise)
-            envnoise_scaled = prep_noise.scale_noise(envnoise_normalized,rand_scale)
-            envnoise_matched = prep_noise.match_length(envnoise_scaled,sr,total_length)
-            if len(envnoise_matched) != len(y):
-                diff = int(len(y) - len(envnoise_matched))
-                if diff < 0:
-                    envnoise_matched = envnoise_matched[:diff]
-                else:
-                    envnoise_matched = np.append(envnoise_matched,np.zeros(diff,))
-            y += envnoise_matched
+        rand_scale = 0.0
+        if env_noise:
+            #at random apply varying amounts of environment noise
+            rand_scale = random.choice([0.0,0.25,0.5,0.75,1.0,1.25])
+            logging.info("Scale of noise applied: {}".format(rand_scale))
+            if rand_scale:
+                #apply *known* environemt noise to signal
+                total_length = len(y)/sr
+                envnoise_normalized = prep_data.normalize(env_noise)
+                envnoise_scaled = prep_data.scale_noise(envnoise_normalized,rand_scale)
+                envnoise_matched = prep_data.match_length(envnoise_scaled,sr,total_length)
+                if len(envnoise_matched) != len(y):
+                    diff = int(len(y) - len(envnoise_matched))
+                    if diff < 0:
+                        envnoise_matched = envnoise_matched[:diff]
+                    else:
+                        envnoise_matched = np.append(envnoise_matched,np.zeros(diff,))
+                y += envnoise_matched
         mfccs = librosa.feature.mfcc(y, sr, n_mfcc=num_mfcc,hop_length=int(0.010*sr),n_fft=int(0.025*sr))
         return mfccs, sr, rand_scale
     except EOFError as error:
@@ -172,10 +163,12 @@ if __name__ == '__main__':
         c = conn.cursor()
 
         #load environment noise to be added to training data
-        env_noise = librosa.load(environment_noise)[0]
+        if environment_noise: 
+            env_noise = librosa.load(environment_noise)[0]
+        else:
+            env_noise = None
 
         prog_start = time.time()
-        #logging.info(label)
         logging.info(prog_start)
         columns = list((range(0,num_mfcc)))
         column_type = []

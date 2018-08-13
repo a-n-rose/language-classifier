@@ -7,3 +7,4 @@ env/
 *.csv#
 *.directory
 *__pycache__/
+*.tgz

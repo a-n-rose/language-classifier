@@ -8,7 +8,7 @@ Global variables such as database name and type of background noise group (added
 This script allows you to see how far along the program is in each directory
 
 This calculates 40 coefficiens (rather than 13) and will therefore create a database with 45 columns (40 coefficiencts with 
-filename, directory, noise labels, and categorical label)
+filename, noise labels, and categorical label)
 '''
 
 import os, tarfile

@@ -268,6 +268,3 @@ if __name__ == '__main__':
     finally:
         if conn:
             conn.close()
-
-            
-            

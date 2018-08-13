@@ -1,33 +1,63 @@
 '''
-This script is suited to exctract features from .wav files that are in one or more folders within the cwd.  
+Run this script from a directory with subdirectory(ies) containing .tgz files (that contain wavefiles) or .wav files
 
-40 MFCCs will be extracted and saved via SQLite3. One can use fewer in training as desired.
+The subdirectories should be labeled by their language - the subdirectory names will be used to categorize the data when training the algorithm
 
-Options for MFCC extraction: the current script allows you to supply a recording of background noise; . This would ideally match the background levels new recordings will be made, i.e. for the classifier to classify.  This noise is then added (at varying levels) to the training wavefiles, which are then processed for MFCC extraction.
+Global variables such as database name and type of background noise group (added to training data) need to be defined before running the script.
 
-This may take several hours (possibly around 10 hours) 
+This script allows you to see how far along the program is in each directory
 
-Logging will be saved in a .csv in the cwd.
-
+This calculates 40 coefficiens (rather than 13) and will therefore create a database with 45 columns (40 coefficiencts with 
+filename, directory, noise labels, and categorical label)
 '''
-import os 
+
+import os, tarfile
 import numpy as np
 import pandas as pd
 import librosa
 import glob
+import shutil
 import sqlite3
-import random
+from sqlite3 import Error
+from pathlib import Path
 import time
+import datetime
+import random
 import logging
 import logging.handlers
 logger = logging.getLogger(__name__)
 from pympler import tracker
 
-
-import prep_noise
-
+import prep_noise_test as prep_noise
 
 
+
+#global variables
+database = 'sp_mfcc_test11.db'
+noisegroup = 'matched' #other groups: 'none' and 'random'
+environment_noise = 'background_noise.wav'
+#specify number of mfccs --> reflects the number of columns
+num_mfcc = 40
+
+#'.' below means current directory
+def extract(tar_url, extract_path='.'):
+    tar = tarfile.open(tar_url, 'r')
+    for item in tar:
+        tar.extract(item, extract_path)
+        if item.name.find(".tgz") != -1 or item.name.find(".tar") != -1:
+            extract(item.name, "./" + item.name[:item.name.rfind('/')])
+        
+def check_filetype(audio_file):
+    fileinfo = os.path.splitext(audio_file)
+    filename,filetype = fileinfo[0],fileinfo[-1]
+    if filetype.lower() == '.tgz':
+        extract(audio_file, extract_path = '/tmp/audio')
+        return filename, True
+    elif filetype.lower() == '.wav':
+        return filename, False
+    else:
+        return None, None
+            
 def parser(wavefile,num_mfcc,env_noise):
     try:
         y, sr = librosa.load(wavefile, res_type= 'kaiser_fast')
@@ -37,7 +67,7 @@ def parser(wavefile,num_mfcc,env_noise):
         rand_scale = random.choice([0.0,0.25,0.5,0.75,1.0,1.25])
         logging.info("Scale of noise applied: {}".format(rand_scale))
         if rand_scale:
-            #apply *matched* environemt noise to signal
+            #apply *known* environemt noise to signal
             total_length = len(y)/sr
             envnoise_normalized = prep_noise.normalize(env_noise)
             envnoise_scaled = prep_noise.scale_noise(envnoise_normalized,rand_scale)
@@ -58,30 +88,24 @@ def parser(wavefile,num_mfcc,env_noise):
     
     return None, None
 
-    
-def get_save_mfcc(tgz_file,label,dirname,num_mfcc,env_noise):
-    noisegroup = 'matched'#other groups: 'none' and 'random'
-    filename = os.path.splitext(tgz_file)[0]
-    feature, sr, noise_scale = parser(filename+".wav",num_mfcc,env_noise)
+
+def insert_data(filename,feature, sr, noise_scale,label):
     if sr:
         columns = list((range(0,num_mfcc)))
-        #turn coefficient number into column names
         column_str = []
         for i in columns:
             column_str.append(str(i))
         feature_df = pd.DataFrame(feature)
         curr_df = pd.DataFrame.transpose(feature_df)
-        #apply column names to dataframe
         curr_df.columns = column_str
-        #add additional columns with helpful info such as filenames/directory name/noise info
+        #add additional columns with helpful info such as filename,noise info, label
         curr_df["filename"] = filename
-        curr_df["directory"] = dirname
         curr_df["noisegroup"] = noisegroup
         curr_df["noiselevel"] = noise_scale 
         curr_df["label"] = label
-         
+        
         x = curr_df.as_matrix()
-        num_cols = num_mfcc + len(['filename','directory','noisegroup','noiselevel','label'])
+        num_cols = num_mfcc + len(['filename','noisegroup','noiselevel','label'])
         col_var = ""
         for i in range(num_cols):
             if i < num_cols-1:
@@ -91,15 +115,16 @@ def get_save_mfcc(tgz_file,label,dirname,num_mfcc,env_noise):
         c.executemany(' INSERT INTO mfcc_40 VALUES (%s) ' % col_var,x)
         conn.commit()
     else:
-        logging.exception("Failed MFCC extraction: {} in the directory: {}".format(tgz_file,dirname))
+        logging.exception("Failed MFCC extraction: {} in the directory: {}".format(filename,label))
+    
     return None
+
+
+
 
 
 if __name__ == '__main__':
     try:
-        
-        
-        #------------------------------- Logger ---------------------------#
         tr_tot = tracker.SummaryTracker()
         
         #default format: severity:logger name:message
@@ -140,74 +165,84 @@ if __name__ == '__main__':
         file_handler_debug.setLevel(logging.DEBUG)
         logging.root.addHandler(file_handler_debug)
         
-        
-        
-        
-        
-        
-        
-        #-----------------------------------------------------------------#
-        
+    
         #initialize database
-        conn = sqlite3.connect('sp_mfcc.db')
+        conn = sqlite3.connect(database)
         c = conn.cursor()
 
         #load environment noise to be added to training data
-        env_noise = librosa.load('background_noise.wav')[0]
+        env_noise = librosa.load(environment_noise)[0]
 
-        #label = input("Which category is this speech? ")
-        label = 'Test'
         prog_start = time.time()
-        logging.info(label)
+        #logging.info(label)
         logging.info(prog_start)
-        #specify number of mfccs --> reflects the number of columns
-        num_mfcc = 40
         columns = list((range(0,num_mfcc)))
         column_type = []
         for i in columns:
             column_type.append('"'+str(i)+'" REAL')
 
 
-        c.execute(''' CREATE TABLE IF NOT EXISTS mfcc_40(%s,filename  TEXT, directory TEXT, noisegroup TEXT, noiselevel REAL, label TEXT) ''' % ", ".join(column_type))
+        c.execute(''' CREATE TABLE IF NOT EXISTS mfcc_40(%s,filename  TEXT, noisegroup TEXT, noiselevel REAL, label TEXT) ''' % ", ".join(column_type))
         conn.commit()
 
-
+            
         #collect directory names:
         dir_list = []
-        for dirname in glob.glob('*/'):
-            dir_list.append(dirname)
+        for label in glob.glob('*/'):
+            dir_list.append(label)
         if len(dir_list) > 0:
             print("The directories found include: ", dir_list)
         else:
             print("No directories found")
-
-
+         
         for j in range(len(dir_list)):
-        #for j in range(1):
             directory = dir_list[j]
             os.chdir(directory)
-            dirname = directory[:-1]
-            logging.info(dirname)
-            print("Now processing the directory: "+dirname)
+            label = directory[:-1]
+            print("Now processing the directory: "+label)
             files_list = []
-            for wav in glob.glob('*.wav'):
-                files_list.append(wav)
-            if len(files_list) != 0:
-                for i in range(len(files_list)):
-                    logging.info(files_list[i])
-                    get_save_mfcc(files_list[i],label,dirname,num_mfcc,env_noise)
-                    logging.info("Successfully processed {} from the directory {}".format(files_list[i],dirname))
-                    logging.info("Progress: \nwavefile {} out of {}\nindex = {} \ndirectory {} out of {} \nindex = {}".format(i+1,len(files_list),i,j+1,len(dir_list),j))
-                    print("Progress: ", ((i+1)/(len(files_list)))*100,"%  (",dirname,": ",j+1,"/",len(dir_list)," directories)")
-            else:
-                print("No wave files found in ", dirname)
-            os.chdir("..")
-            print("The wave files in the "+ dirname + " directory have been processed successfully")
+            for item in glob.glob('*.*'):
+                files_list.append(item)
+            for i in range(len(files_list)):
+                filename, tgz_file = check_filetype(files_list[i])
+                if tgz_file == True:
+                    waves_list = []
+                    for wav in glob.glob('/tmp/audio/**/*.wav',recursive=True):
+                        waves_list.append(wav)
+                    if len(waves_list) > 0:
+                        for k in range(len(waves_list)):
+                            feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
+                            wav_name = str(Path(wav).name)
+                            insert_data(filename+'_'+wav_name,feature, sr, noise_scale,label)
+                            update = "Progress: \nwavefile {} ({}) out of {}\ntgz file {} ({}) out of {}".format(k+1,waves_list[k],len(waves_list),i+1,filename,len(files_list))
+                            percentage = "{}% through tgz file {}".format(((k+1)/(len(waves_list)))*100,filename)
+                        
+                            logging.info(update)
+                            print(percentage)
+                            print(update)
+                    else:
+                        update_nowave_inzip = "No .wav files found in zipfile: {}".format(files_list[i])
+                        logging.info(update_nowave_inzip)
+                        print(update_nowave_inzip)
+                    shutil.rmtree('/tmp/audio/'+filename)
+                elif tgz_file == False:
+                    wav = files_list[i]
+                    feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
+                    insert_data(filename+".wav",feature, sr, noise_scale,label)
+                else:
+                    print("No .wav or .tgz files found.")
+            
+                logging.info("Processed {} from the directory {}".format(files_list[i],label))
+                logging.info("Progress: \nwavefile {} out of {}\nindex = {} \ndirectory {} out of {} \nindex = {}".format(i+1,len(files_list),i,j+1,len(dir_list),j))
+                print("Progress: ", ((i+1)/(len(files_list)))*100,"%  (",label,": ",j+1,"/",len(dir_list)," directories)")
 
+            print("Finished processing directory ",label)
+            os.chdir("..")
+                
         conn.commit()
         conn.close()
         print("MFCC data has been successfully saved!")
-        print("All wave files have been processed")
+        print("All audio files have been processed")
         elapsed_time = time.time()-prog_start
         logging.info("Elapsed time in hours: {}".format(elapsed_time/3600))
         print("Elapsed time in hours: ", elapsed_time/3600)
@@ -218,4 +253,7 @@ if __name__ == '__main__':
         logging.exception("Error occurred: %s" % e)
     finally:
         if conn:
-            conn.close() 
+            conn.close()
+
+            
+            

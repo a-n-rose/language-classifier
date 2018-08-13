@@ -47,9 +47,9 @@ Then install dependencies via pip:
 pip install _________
 ```
 
-Run matchbackground2mfcc.py in cwd where subdirectories of wave and zip files are located
+Run nobackground2mfcc.py in cwd where subdirectories of wave and zip files are located
 ```
-python3 matchbackground2mfcc.py
+python3 nobackground2mfcc.py
 ```
 
 To deactivate the environment:
@@ -58,7 +58,6 @@ deactivate
 ```
 
 ## ToDo
-* Check speeds between matchbackground2mfcc.py and matchbackground2mfcc_version2.py (The former expects .wav files to be in the immediate subdirectores; the latter allows more flexibility in subdirectory structure)
 * Use MFCCs to train algorithms
 
 ## License

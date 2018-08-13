@@ -28,15 +28,16 @@ import logging.handlers
 logger = logging.getLogger(__name__)
 from pympler import tracker
 
-import prep_noise_test as prep_noise
+import prep_noise as prep_noise
 
 
 
 #global variables
-database = 'sp_mfcc_test11.db'
+database = 'sp_mfcc.db'
 noisegroup = 'matched' #other groups: 'none' and 'random'
 environment_noise = 'background_noise.wav'
 #specify number of mfccs --> reflects the number of columns
+#this needs to match the others in the database, therefore should be changed with caution
 num_mfcc = 40
 
 #'.' below means current directory

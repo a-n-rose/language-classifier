@@ -20,7 +20,8 @@ Structure the speech files so that in your cwd all the English (or whatever lang
 
 Before running the script 'matchbackground2mfcc.py':
 * Check the global variables, i.e. database name, the noise group label, etc.
-* This script expects a background noise file, to include background noise in the training data. For now it just uses one file and pulls random snippets of the noise to apply to the speech data
+* If you want to apply noise, have a noise wavefile in the cwd and input that into the script
+* Depending on how the script is set up, it expects a background noise wavefile to apply background noise to the training data. For now it just uses one file from the cwd and pulls random snippets of the noise to apply to the speech data.
 * For tgz zip files, the script unzips them in /tmp/audio. If there is a problem, try creating an 'audio' directory in your root/tmp/ directory
 
 Run  in the script in cwd. The MFCCs (with noise, at varying levels) will be saved in a database. 
@@ -59,7 +60,8 @@ deactivate
 ```
 
 ## ToDo
-* Make sure wave files will be processed even if they are in subdirectories of the subdirectory (They will be processed in the tgz files, no matter how far down the subdirectory chain they go)
+* Check speeds between matchbackground2mfcc.py and matchbackground2mfcc_version2.py (The former expects .wav files to be in the immediate subdirectores; the latter allows more flexibility in subdirectory structure)
+* Use MFCCs to train algorithms
 
 ## License
 

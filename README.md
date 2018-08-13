@@ -13,10 +13,10 @@ wget -r -A.tgz http://www.repository.voxforge1.org/downloads/SpeechCorpus/Trunk/
 Note: there are several folders with speech data: the above folder is "48kHz_16bit" and has the most speech data. Other folders with varying amounts of speech data include "16kHz_16bit/","32kHz_16bit/","44.1kHz_16bit/","8kHz_16bit/". Just exchange the text and you will get the files in the other folders as well.
 
 * German:
-Downloaded German speech from: http://www.voxforge.org/home/forums/other-languages/german/open-speech-data-corpus-for-german
+Download German speech from: http://www.voxforge.org/home/forums/other-languages/german/open-speech-data-corpus-for-german
 This has been structured so that if the zipfile is extracted, tons of memory will be used up. Unzip file somewhere with sufficient memory. I think it needs a total of 20GiB.
 
-2) Structure the speech files so that in your cwd all the English (or whatever language files) are located in a subdirectory called 'English' and German files in a 'German' subdirectory. The name of each subdirectory will be used as the categorical label for the speech files within them. 
+2) Structure the speech files so that in your cwd all the English (or whatever language files) are located in a subdirectory called 'English' and German files in a 'German' subdirectory. The name of each subdirectory will be used as the categorical label for the speech files within them. (It doesn't matter if the wave/zip files are in additional subdirectories within the language (i.e. 'English', 'German') folder, just as long as they are within their corresponding language directory.)
 
 3) *Before* running the script 'speech2mfcc_w_wo_noise_wav_tgz.py':
 * Check the global variables, i.e. database name, the noise group label, etc.
@@ -49,7 +49,7 @@ Then install dependencies via pip:
 pip install _________
 ```
 
-Run matchbackground2mfcc.py in cwd where subdirectories of wave and zip files are located
+Run speech2mfcc_w_wo_noise_wav_tgz.py in cwd where subdirectories of wave and zip files are located
 ```
 python3 speech2mfcc_w_wo_noise_wav_tgz.py
 ```

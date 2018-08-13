@@ -215,7 +215,7 @@ if __name__ == '__main__':
                             feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
                             wav_name = str(Path(wav).name)
                             insert_data(filename+'_'+wav_name,feature, sr, noise_scale,label)
-                            update = "Progress: \nwavefile {} ({}) out of {}\ntgz file {} ({}) out of {}".format(k+1,waves_list[k],len(waves_list),i+1,filename,len(files_list))
+                            update = "Progress: \nwavefile {} ({}) out of {}\ntgz file {} ({}) out of {}".format(k+1,str(Path(waves_list[k]).name),len(waves_list),i+1,filename,len(files_list))
                             percentage = "{}% through tgz file {}".format(((k+1)/(len(waves_list)))*100,filename)
                         
                             logging.info(update)

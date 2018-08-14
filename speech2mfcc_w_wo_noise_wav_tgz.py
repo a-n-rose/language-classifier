@@ -239,8 +239,8 @@ if __name__ == '__main__':
                                 wav_name = str(Path(wav).name)
                                 insert_data(filename+'_'+wav_name,feature, sr, noise_scale,label)
                                 conn.commit()
-                                update = "Progress: \nwavefile {} ({}) out of {}\ntgz file {} ({}) out of {}".format(k+1,wav_name,len(waves_list),t+1,filename,len(tgz_list))
-                                percentage = "{}% through tgz file {}".format(((k+1)/(len(waves_list)))*100,filename)
+                                update = "\nProgress: \nwavefile {} ({}) out of {}\ntgz file {} ({}) out of {}".format(k+1,wav_name,len(waves_list),t+1,filename,len(tgz_list))
+                                percentage = "{}% through tgz file {}\n".format(((k+1)/(len(waves_list)))*100,filename)
                             
                                 logging.info(update)
                                 print(percentage)
@@ -255,12 +255,18 @@ if __name__ == '__main__':
                     print(print_message)
                     logging.info(print_message)
                 
-                print("Finished processing directory ",label)
+                print("\nFinished processing directory ",label)
                 os.chdir("..")
                     
             conn.commit()
+            print_message = '\nData has been committed to database'
+            print(print_message)
+            logging.info(print_message)
             conn.close()
-            print("MFCC data has been successfully saved!")
+            print_message = "Database has been closed"
+            print(print_message)
+            logging.info(print_message)
+            print("\nMFCC data has been successfully saved!")
             print("All audio files have been processed")
             elapsed_time = time.time()-prog_start
             logging.info("Elapsed time in hours: {}".format(elapsed_time/3600))

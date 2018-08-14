@@ -18,7 +18,6 @@ numba-0.39.0
 resampy-0.2.1 
 scikit-learn-0.19.2 
 scipy-1.1.0
-
 pympler-0.5
 
 * Training ANN via Keras

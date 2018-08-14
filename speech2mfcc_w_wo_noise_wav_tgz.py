@@ -164,13 +164,14 @@ if __name__ == '__main__':
         
         check_variables = input("\nIMPORTANT!!!!\nHave you checked the global variables at the top of this script? \n\nThese are used to track which noise group your MFCCs will be processed with, where your data should be saved, and how many MFCCs will be extracted. (Y or N): ")
         if 'y' in check_variables.lower():
-            print_message = "Run the script after you check the global variables."
-            print(print_message)
-            logging.info(print_message)
 
             #load environment noise to be added to training data
             if environment_noise: 
-                env_noise = librosa.load(environment_noise)[0]
+                try:
+                    env_noise = librosa.load(environment_noise)[0]
+                except FileNotFoundError as fnf:
+                    print("\nCannot find {} in cwd.\n".format(environment_noise))
+                    raise fnf
             else:
                 env_noise = None
 

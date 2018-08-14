@@ -8,7 +8,7 @@ A language classifier model built via deep learning techniques
 * English:
 Enter the following command into your commandline, in the directory where you'd like the speech files to be saved. This will download the files into a zipfile:
 ```
-wget -r -A.tgz http://www.repository.voxforge1.org/downloads/SpeechCorpus/Trunk/Audio/Original/48kHz_16bit/s
+$ wget -r -A.tgz http://www.repository.voxforge1.org/downloads/SpeechCorpus/Trunk/Audio/Original/48kHz_16bit/s
 ```
 Note: there are several folders with speech data: the above folder is "48kHz_16bit" and has the most speech data. Other folders with varying amounts of speech data include "16kHz_16bit/","32kHz_16bit/","44.1kHz_16bit/","8kHz_16bit/". Just exchange the text and you will get the files in the other folders as well.
 
@@ -40,23 +40,23 @@ Currently, the installations.md file contains what is necessary for the processi
 
 To start a virtual environment:
 ```
-python3 -m venv env
-source env/bin/activate
+$ python3 -m venv env
+$ source env/bin/activate
 ```
 
 Then install dependencies via pip:
 ```
-pip install _________
+(env)...$ pip install _________
 ```
 
 Run speech2mfcc_w_wo_noise_wav_tgz.py in cwd where subdirectories of wave and zip files are located
 ```
-python3 speech2mfcc_w_wo_noise_wav_tgz.py
+(env)...$ python3 speech2mfcc_w_wo_noise_wav_tgz.py
 ```
 
 To deactivate the environment:
 ```
-deactivate
+(env)...$ deactivate
 ```
 
 ## ToDo

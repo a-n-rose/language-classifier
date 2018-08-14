@@ -2,7 +2,7 @@
 
 * For extracting MFCCs from waves and tgz files:
 
-numpy-1.15.0
+numpy-1.14.0
 
 pandas-0.23.4
 python-dateutil-2.7.3 

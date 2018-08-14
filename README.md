@@ -39,7 +39,7 @@ With a lot of speech data, this will take several hours.
 
 You need a machine with at least 20GiB of free memory (I would aim for more). Make sure you can let this machine run for several hours for each step for each language (i.e. 1) download 2) extract MFCCs 3) train models)
 
-For required installations, please refer to the installations.md file.
+For required installations (i.e. versions used building this), please refer to the installations.md file.
 
 ### Installing
 
@@ -51,7 +51,7 @@ $ source env/bin/activate
 
 Then install dependencies via pip:
 ```
-(env)...$ pip install _________
+(env)...$ pip install numpy, pandas, librosa, pympler, keras, tensorflow
 ```
 
 After checking the global variables, run speech2mfcc_w_wo_noise_wav_tgz.py in cwd where subdirectories of wave and zip files are located

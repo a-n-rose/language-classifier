@@ -51,7 +51,7 @@ $ source env/bin/activate
 
 Then install dependencies via pip:
 ```
-(env)...$ pip install numpy, pandas, librosa, pympler, keras, tensorflow
+(env)...$ pip install numpy, pandas, librosa, keras, tensorflow
 ```
 
 After checking the global variables, run speech2mfcc_w_wo_noise_wav_tgz.py in cwd where subdirectories of wave and zip files are located

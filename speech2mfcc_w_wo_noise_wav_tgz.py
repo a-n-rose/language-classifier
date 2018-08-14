@@ -60,7 +60,7 @@ def parser(wavefile,num_mfcc,env_noise=None):
             rand_scale = random.choice([0.0,0.25,0.5,0.75,1.0,1.25])
             logging.info("Scale of noise applied: {}".format(rand_scale))
             if rand_scale:
-                #apply *known* environemt noise to signal
+                #apply random segments of environemt noise to signal
                 total_length = len(y)/sr
                 envnoise_normalized = prep_data.normalize(env_noise)
                 envnoise_scaled = prep_data.scale_noise(envnoise_normalized,rand_scale)

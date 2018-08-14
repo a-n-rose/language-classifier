@@ -1,5 +1,6 @@
 ## Installations
 
+* For extracting MFCCs from waves and tgz files:
 
 numpy-1.15.0
 
@@ -20,5 +21,24 @@ scipy-1.1.0
 
 pympler-0.5
 
+* Training ANN via Keras
 
+keras-2.2.2 
+keras-applications-1.0.4 
+keras-preprocessing-1.0.2 
+pyyaml-3.13
+h5py-2.8.0 
+
+tensorflow-1.10.0 
+tensorboard-1.10.0 
+termcolor-1.1.0 
+werkzeug-0.14.1 
+wheel-0.31.1
+absl-py-0.3.0 
+astor-0.7.1 
+gast-0.2.0 
+grpcio-1.14.1 
+markdown-2.6.11 
+numpy-1.14.5 
+protobuf-3.6.1 
 

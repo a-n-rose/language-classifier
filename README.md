@@ -18,6 +18,8 @@ This has been structured so that if the zipfile is extracted, tons of memory wil
 
 2) Structure the speech files so that in your cwd all the English (or whatever language files) are located in a subdirectory called 'English' and German files in a 'German' subdirectory. The name of each subdirectory will be used as the categorical label for the speech files within them. (It doesn't matter if the wave/zip files are in additional subdirectories within the language (i.e. 'English', 'German') folder, just as long as they are within their corresponding language directory.)
 
+Note: when extracting MFCCs, this script expects a one-to-one ratio of speaker and wavefile/tgzfile. It assigns each wavefile and tgzfile to either the train, validate, or test data sets. This is to avoid mixing a speaker's data between groups. If this doesn't work with your data, ignore the column 'dataset'. Another way you could create train, validate, and test datasets is to create them as subdirectories of the cwd (i.e. 'English_train', 'English_test') and place the corresponding audio files into those subdirectories.
+
 3) *Before* running the script 'speech2mfcc_w_wo_noise_wav_tgz.py':
 * Check the global variables, i.e. database name, the noise group label, etc.
 * If you want to apply noise, have a noise wavefile in the cwd and input that into the script
@@ -29,7 +31,7 @@ This has been structured so that if the zipfile is extracted, tons of memory wil
 With a lot of speech data, this will take several hours.
 
 5) *Before* running the script 'train_ann_mfcc_basic.py':
-* Check global variables, i.e. database name, table name, batchsize, epochs, and the name the model should be saved under 
+* Check global variables, i.e. database name, table name, batchsize, epochs, and the name the model should be saved under.
 
 6) run 'train_ann_mfcc_basic.py' in same directory as the database
 
@@ -38,7 +40,6 @@ With a lot of speech data, this will take several hours.
 You need a machine with at least 20GiB of free memory (I would aim for more). Make sure you can let this machine run for several hours for each step for each language (i.e. 1) download 2) extract MFCCs 3) train models)
 
 For required installations, please refer to the installations.md file.
-Currently, the installations.md file contains what is necessary for the processing of audiofiles
 
 ### Installing
 

@@ -1,5 +1,5 @@
 # Language Classifier
-A language classifier model built via deep learning techniques
+A language classifier model built via deep learning techniques. Currently, the classifer is an ANN. Future classifiers will include CNN, among others.
 
 ## Getting Started
 

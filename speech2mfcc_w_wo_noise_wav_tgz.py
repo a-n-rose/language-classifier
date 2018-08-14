@@ -168,7 +168,12 @@ if __name__ == '__main__':
         conn = sqlite3.connect(database)
         c = conn.cursor()
         
-        check_variables = input("\nIMPORTANT!!!!\nHave you checked the global variables at the top of this script? \n\nThese are used to track which noise group your MFCCs will be processed with, where your data should be saved, and how many MFCCs will be extracted. (Y or N): ")
+        print("Database will be saved as: {}".format(database))
+        print("Noisegroup of collected MFCCs: {}".format(noisegroup))
+        print("Noise wavefile: {}".format(environment_noise))
+        print("Number of MFCCs to be extracted: {}".format(num_mfcc))
+        
+        check_variables = input("\nIMPORTANT!!!!\nAre the items listed above correct? (Y or N): ")
         if 'y' in check_variables.lower():
 
             #load environment noise to be added to training data
@@ -300,7 +305,7 @@ if __name__ == '__main__':
             print("Elapsed time in hours: ", elapsed_time/3600)
             tr_tot.print_diff()
         else:
-            print_message = "\nRun the script after you check the global variables."
+            print_message = "\nRun the script after you correct the global variables within the script."
             print(print_message)
             logging.info(print_message)
     except sqlite3.Error as e:

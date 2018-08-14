@@ -34,9 +34,9 @@ import prep_noise as prep_data
 
 #global variables
 database = 'sp_mfcc.db'
-noisegroup = 'matched' #other groups: 'none' and 'random'
-#if no noise, environment_noise = None
-environment_noise = 'background_noise.wav' #None (see note above)
+noisegroup = 'none' # Options: 'matched' 'none' 'random'
+#if no noise, environment_noise = None; otherwise, put name of wavefile here
+environment_noise = None #Options: None or wavefile i.e. 'background_noise.wav'  
 #specify number of mfccs --> reflects the number of columns
 #this needs to match the others in the database, therefore should be changed with caution
 num_mfcc = 40
@@ -55,7 +55,7 @@ def parser(wavefile,num_mfcc,env_noise=None):
         y = prep_data.normalize(y)
         
         rand_scale = 0.0
-        if env_noise.any() != None:
+        if env_noise is not None:
             #at random apply varying amounts of environment noise
             rand_scale = random.choice([0.0,0.25,0.5,0.75,1.0,1.25])
             logging.info("Scale of noise applied: {}".format(rand_scale))

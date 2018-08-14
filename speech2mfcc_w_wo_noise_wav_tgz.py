@@ -1,9 +1,12 @@
 '''
 Run this script from a directory with subdirectory(ies) containing .tgz files (that contain wavefiles) or .wav files
 
-The subdirectories should be labeled by their language - the subdirectory names will be used to categorize the data when training the algorithm
+The subdirectories should be labeled by their language - the subdirectory names will be used to categorize the data when training the algorithm. 
 
-Global variables such as database name and type of background noise group (added to training data) need to be defined before running the script.
+IMPORTANT:
+This randomly assigns speakers to train, validation, and test sets (speakers should not mix in these sets). Therefore, if you cannot ensure each speaker has only one wavfile or tgz file, or that each tgz file is dedicated to only 1 speaker, please create 'English_train', 'English_test', 'English_validate' subdirectories in the cwd (instead of just 'English') with sufficient audio files in each. You can then ignore the 'dataset' variable. 
+
+Global variables such as database name and type of background noise group (added to training data) need to be defined before running the script. 
 
 This script allows you to see how far along the program is in each directory
 
@@ -41,6 +44,7 @@ environment_noise = None #Options: None or wavefile i.e. 'background_noise.wav'
 #this needs to match the others in the database, therefore should be changed with caution
 num_mfcc = 40
 
+
 #'.' below means current directory
 def extract(tar_url, extract_path='.'):
     tar = tarfile.open(tar_url, 'r')
@@ -55,12 +59,13 @@ def parser(wavefile,num_mfcc,env_noise=None):
         y = prep_data.normalize(y)
         
         rand_scale = 0.0
+        #randomly assigns speaker data to 1 (train) 2 (validation) or 3 (test)
         if env_noise is not None:
             #at random apply varying amounts of environment noise
             rand_scale = random.choice([0.0,0.25,0.5,0.75,1.0,1.25])
             logging.info("Scale of noise applied: {}".format(rand_scale))
             if rand_scale:
-                #apply random segments of environemt noise to signal
+                #apply *known* environemt noise to signal
                 total_length = len(y)/sr
                 envnoise_normalized = prep_data.normalize(env_noise)
                 envnoise_scaled = prep_data.scale_noise(envnoise_normalized,rand_scale)
@@ -82,7 +87,7 @@ def parser(wavefile,num_mfcc,env_noise=None):
     return None, None, None
 
 
-def insert_data(filename,feature, sr, noise_scale,label):
+def insert_data(filename,feature, sr, noise_scale,dataset_group,label):
     if sr:
         columns = list((range(0,num_mfcc)))
         column_str = []
@@ -95,10 +100,11 @@ def insert_data(filename,feature, sr, noise_scale,label):
         curr_df["filename"] = filename
         curr_df["noisegroup"] = noisegroup
         curr_df["noiselevel"] = noise_scale 
+        curr_df["dataset"] = dataset_group
         curr_df["label"] = label
         
         x = curr_df.as_matrix()
-        num_cols = num_mfcc + len(['filename','noisegroup','noiselevel','label'])
+        num_cols = num_mfcc + len(['filename','noisegroup','noiselevel','dataset','label'])
         col_var = ""
         for i in range(num_cols):
             if i < num_cols-1:
@@ -183,7 +189,7 @@ if __name__ == '__main__':
                 column_type.append('"'+str(i)+'" REAL')
 
 
-            c.execute(''' CREATE TABLE IF NOT EXISTS mfcc_40(%s,filename  TEXT, noisegroup TEXT, noiselevel REAL, label TEXT) ''' % ", ".join(column_type))
+            c.execute(''' CREATE TABLE IF NOT EXISTS mfcc_40(%s,filename  TEXT, noisegroup TEXT, noiselevel REAL, dataset INT,label TEXT) ''' % ", ".join(column_type))
             conn.commit()
 
                 
@@ -208,10 +214,13 @@ if __name__ == '__main__':
                     wavefiles.append(wav)
                 if len(wavefiles) > 0:
                     for v in range(len(wavefiles)):
+                        #assigns wavefile to train, validate, or train dataset (1,2,3 respectively)
+                        #does expect each speaker to have only 1 wavefile
+                        dataset_group = random.choice([1,1,1,1,1,1,1,2,2,2,3,3,3])
                         wav = wavefiles[v]
                         feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
                         filename = Path(wav).name
-                        insert_data(filename,feature, sr, noise_scale,label)
+                        insert_data(filename,feature, sr, noise_scale,dataset_group,label)
                         conn.commit()
                         
                         update = "\nProgress: \nwavefile {} ({} out of {})".format(filename,v+1,len(wavefiles))
@@ -236,6 +245,9 @@ if __name__ == '__main__':
                     tgz_list.append(tgz)
                 if len(tgz_list) > 0:
                     for t in range(len(tgz_list)):
+                        #assigns zipfile to train, validate, or train dataset (1,2,3 respectively)
+                        #does expect each speaker to have only 1 zipfile/an entire zipfile to be dedicated to only 1 speaker
+                        dataset_group = random.choice([1,1,1,1,1,1,1,2,2,2,3,3,3])
                         extract(tgz_list[t], extract_path = '/tmp/audio')
                         filename = os.path.splitext(tgz_list[t])[0]
                         waves_list = []
@@ -246,7 +258,7 @@ if __name__ == '__main__':
                                 wav = waves_list[k]
                                 feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
                                 wav_name = str(Path(wav).name)
-                                insert_data(filename+'_'+wav_name,feature, sr, noise_scale,label)
+                                insert_data(filename+'_'+wav_name,feature, sr, noise_scale,dataset_group,label)
                                 conn.commit()
                                 
                                 update = "\nProgress: \nwavefile {} ({} out of {})\ntgz file {} ({} out of {})".format(wav_name,k+1,len(waves_list),filename,t+1,len(tgz_list))

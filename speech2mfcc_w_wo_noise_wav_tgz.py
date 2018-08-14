@@ -218,14 +218,11 @@ if __name__ == '__main__':
                         total_percentage = "Appx. {}% through all directories".format(((j+1)/(len(dir_list)))*100)
                     
                         logging.info(update)
+                        print(update)
                         print(dir_percentage)
                         print(total_percentage)
-                        print(update)
+
                                 
-                                
-                        progress_message = "Progress: \nfinished processing {} \n{} % wavefiles completed. \nDirectories processed: {}/{}".format(filename,(v+1/len(wavefiles)*100),j+1,len(dir_list))
-                        print(progress_message)
-                        logging.info(progress_message)
                 else:
                     print_message = "No wave files found in directory: {}".format(label)
                     print(print_message)
@@ -257,10 +254,11 @@ if __name__ == '__main__':
                                 total_percentage = "Appx. {}% through all directories".format(((j+1)/(len(dir_list)))*100)
                             
                                 logging.info(update)
+                                print(update)
                                 print(percentage)
                                 print(dir_percentage)
                                 print(total_percentage)
-                                print(update)
+
                         else:
                             update_nowave_inzip = "No .wav files found in zipfile: {}".format(tgz_list[t])
                             logging.info(update_nowave_inzip)
@@ -271,7 +269,7 @@ if __name__ == '__main__':
                     print(print_message)
                     logging.info(print_message)
                 
-                print("\nFinished processing directory ",label)
+                print("\nFinished processing directory {}\n".format(label))
                 os.chdir("..")
                     
             conn.commit()

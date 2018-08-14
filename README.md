@@ -28,6 +28,10 @@ This has been structured so that if the zipfile is extracted, tons of memory wil
 
 With a lot of speech data, this will take several hours.
 
+5) *Before* running the script 'train_ann_mfcc_basic.py':
+* Check global variables, i.e. database name, table name, batchsize, epochs, and the name the model should be saved under 
+
+6) run 'train_ann_mfcc_basic.py' in same directory as the database
 
 ### Prerequisites
 
@@ -52,6 +56,7 @@ Then install dependencies via pip:
 Run speech2mfcc_w_wo_noise_wav_tgz.py in cwd where subdirectories of wave and zip files are located
 ```
 (env)...$ python3 speech2mfcc_w_wo_noise_wav_tgz.py
+(env)...$ python3 train_ann_mfcc_basic.py
 ```
 
 To deactivate the environment:
@@ -61,6 +66,7 @@ To deactivate the environment:
 
 ## ToDo
 * Use MFCCs to train algorithms
+* limit number of rows pulled out for training --> set up batch training 
 
 ## License
 

@@ -80,4 +80,4 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* VoxForge, although I do hope for more speech databases that offer a lot of clinical speech data as well as even ratios of male and female voices.
+* VoxForge

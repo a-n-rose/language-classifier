@@ -157,110 +157,119 @@ if __name__ == '__main__':
         file_handler_debug.setFormatter(log_formatter)
         file_handler_debug.setLevel(logging.DEBUG)
         logging.root.addHandler(file_handler_debug)
-        
-    
+
         #initialize database
         conn = sqlite3.connect(database)
         c = conn.cursor()
-
-        #load environment noise to be added to training data
-        if environment_noise: 
-            env_noise = librosa.load(environment_noise)[0]
-        else:
-            env_noise = None
-
-        prog_start = time.time()
-        logging.info(prog_start)
-        columns = list((range(0,num_mfcc)))
-        column_type = []
-        for i in columns:
-            column_type.append('"'+str(i)+'" REAL')
-
-
-        c.execute(''' CREATE TABLE IF NOT EXISTS mfcc_40(%s,filename  TEXT, noisegroup TEXT, noiselevel REAL, label TEXT) ''' % ", ".join(column_type))
-        conn.commit()
-
-            
-        #collect directory names:
-        dir_list = []
-        for label in glob.glob('*/'):
-            dir_list.append(label)
-        if len(dir_list) > 0:
-            print("The directories found include: ", dir_list)
-        else:
-            print("No directories found")
-         
-        for j in range(len(dir_list)):
-            directory = dir_list[j]
-            os.chdir(directory)
-            label = directory[:-1]
-            print("Now processing the directory: "+label)
-            
-            #check for all wave files in each subdirectory:
-            wavefiles = []
-            for wav in glob.glob('**/*.wav',recursive = True):
-                wavefiles.append(wav)
-            if len(wavefiles) > 0:
-                for v in range(len(wavefiles)):
-                    wav = wavefiles[v]
-                    feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
-                    filename = Path(wav).name
-                    insert_data(filename,feature, sr, noise_scale,label)
-                    conn.commit()
-                    progress_message = "Progress: \nfinished processing {} \n{} % wavefiles completed. \nDirectories processed: {}/{}".format(filename,(v+1/len(wavefiles)*100),j+1,len(dir_list))
-                    print(progress_message)
-                    logging.info(progress_message)
-            else:
-                print_message = "No wave files found in directory: {}".format(label)
-                print(print_message)
-                logging.info(print_message)
-            
         
-            #check for all .tgz files (and the wave files within them)
-            tgz_list = []
-            for tgz in glob.glob('**/*.tgz',recursive=True):
-                tgz_list.append(tgz)
-            if len(tgz_list) > 0:
-                for t in range(len(tgz_list)):
-                    extract(tgz_list[t], extract_path = '/tmp/audio')
-                    filename = os.path.splitext(tgz_list[t])[0]
-                    waves_list = []
-                    for w in glob.glob('/tmp/audio/**/*.wav',recursive=True):
-                        waves_list.append(w)
-                    if len(waves_list) > 0:
-                        for k in range(len(waves_list)):
-                            wav = waves_list[k]
-                            feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
-                            wav_name = str(Path(wav).name)
-                            insert_data(filename+'_'+wav_name,feature, sr, noise_scale,label)
-                            conn.commit()
-                            update = "Progress: \nwavefile {} ({}) out of {}\ntgz file {} ({}) out of {}".format(k+1,wav_name,len(waves_list),t+1,filename,len(tgz_list))
-                            percentage = "{}% through tgz file {}".format(((k+1)/(len(waves_list)))*100,filename)
-                        
-                            logging.info(update)
-                            print(percentage)
-                            print(update)
-                    else:
-                        update_nowave_inzip = "No .wav files found in zipfile: {}".format(tgz_list[t])
-                        logging.info(update_nowave_inzip)
-                        print(update_nowave_inzip)
-                    shutil.rmtree('/tmp/audio/'+filename)
+        check_variables = input("\nIMPORTANT!!!!\nHave you checked the global variables at the top of this script? \n\nThese are used to track which noise group your MFCCs will be processed with, where your data should be saved, and how many MFCCs will be extracted. (Y or N): ")
+        if 'y' in check_variables.lower():
+            print_message = "Run the script after you check the global variables."
+            print(print_message)
+            logging.info(print_message)
+
+            #load environment noise to be added to training data
+            if environment_noise: 
+                env_noise = librosa.load(environment_noise)[0]
             else:
-                print_message = "No tgz files found in directory: {}".format(label)
-                print(print_message)
-                logging.info(print_message)
-            
-            print("Finished processing directory ",label)
-            os.chdir("..")
+                env_noise = None
+
+            prog_start = time.time()
+            logging.info(prog_start)
+            columns = list((range(0,num_mfcc)))
+            column_type = []
+            for i in columns:
+                column_type.append('"'+str(i)+'" REAL')
+
+
+            c.execute(''' CREATE TABLE IF NOT EXISTS mfcc_40(%s,filename  TEXT, noisegroup TEXT, noiselevel REAL, label TEXT) ''' % ", ".join(column_type))
+            conn.commit()
+
                 
-        conn.commit()
-        conn.close()
-        print("MFCC data has been successfully saved!")
-        print("All audio files have been processed")
-        elapsed_time = time.time()-prog_start
-        logging.info("Elapsed time in hours: {}".format(elapsed_time/3600))
-        print("Elapsed time in hours: ", elapsed_time/3600)
-        tr_tot.print_diff()
+            #collect directory names:
+            dir_list = []
+            for label in glob.glob('*/'):
+                dir_list.append(label)
+            if len(dir_list) > 0:
+                print("The directories found include: ", dir_list)
+            else:
+                print("No directories found")
+            
+            for j in range(len(dir_list)):
+                directory = dir_list[j]
+                os.chdir(directory)
+                label = directory[:-1]
+                print("Now processing the directory: "+label)
+                
+                #check for all wave files in each subdirectory:
+                wavefiles = []
+                for wav in glob.glob('**/*.wav',recursive = True):
+                    wavefiles.append(wav)
+                if len(wavefiles) > 0:
+                    for v in range(len(wavefiles)):
+                        wav = wavefiles[v]
+                        feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
+                        filename = Path(wav).name
+                        insert_data(filename,feature, sr, noise_scale,label)
+                        conn.commit()
+                        progress_message = "Progress: \nfinished processing {} \n{} % wavefiles completed. \nDirectories processed: {}/{}".format(filename,(v+1/len(wavefiles)*100),j+1,len(dir_list))
+                        print(progress_message)
+                        logging.info(progress_message)
+                else:
+                    print_message = "No wave files found in directory: {}".format(label)
+                    print(print_message)
+                    logging.info(print_message)
+                
+            
+                #check for all .tgz files (and the wave files within them)
+                tgz_list = []
+                for tgz in glob.glob('**/*.tgz',recursive=True):
+                    tgz_list.append(tgz)
+                if len(tgz_list) > 0:
+                    for t in range(len(tgz_list)):
+                        extract(tgz_list[t], extract_path = '/tmp/audio')
+                        filename = os.path.splitext(tgz_list[t])[0]
+                        waves_list = []
+                        for w in glob.glob('/tmp/audio/**/*.wav',recursive=True):
+                            waves_list.append(w)
+                        if len(waves_list) > 0:
+                            for k in range(len(waves_list)):
+                                wav = waves_list[k]
+                                feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
+                                wav_name = str(Path(wav).name)
+                                insert_data(filename+'_'+wav_name,feature, sr, noise_scale,label)
+                                conn.commit()
+                                update = "Progress: \nwavefile {} ({}) out of {}\ntgz file {} ({}) out of {}".format(k+1,wav_name,len(waves_list),t+1,filename,len(tgz_list))
+                                percentage = "{}% through tgz file {}".format(((k+1)/(len(waves_list)))*100,filename)
+                            
+                                logging.info(update)
+                                print(percentage)
+                                print(update)
+                        else:
+                            update_nowave_inzip = "No .wav files found in zipfile: {}".format(tgz_list[t])
+                            logging.info(update_nowave_inzip)
+                            print(update_nowave_inzip)
+                        shutil.rmtree('/tmp/audio/'+filename)
+                else:
+                    print_message = "No tgz files found in directory: {}".format(label)
+                    print(print_message)
+                    logging.info(print_message)
+                
+                print("Finished processing directory ",label)
+                os.chdir("..")
+                    
+            conn.commit()
+            conn.close()
+            print("MFCC data has been successfully saved!")
+            print("All audio files have been processed")
+            elapsed_time = time.time()-prog_start
+            logging.info("Elapsed time in hours: {}".format(elapsed_time/3600))
+            print("Elapsed time in hours: ", elapsed_time/3600)
+            tr_tot.print_diff()
+        else:
+            print_message = "\nRun the script after you check the global variables."
+            print(print_message)
+            logging.info(print_message)
     except sqlite3.Error as e:
         logging.exception("Database error: %s" % e)
     except Exception as e:

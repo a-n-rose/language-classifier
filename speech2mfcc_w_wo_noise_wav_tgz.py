@@ -263,7 +263,7 @@ if __name__ == '__main__':
                                 wav = waves_list[k]
                                 feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
                                 wav_name = str(Path(wav).name)
-                                insert_data(filename+'_'+wav_name,feature, sr, noise_scale,dataset_group,label)
+                                insert_data(filename+'_'+wav,feature, sr, noise_scale,dataset_group,label)
                                 conn.commit()
                                 
                                 update = "\nProgress: \nwavefile {} ({} out of {})\ntgz file {} ({} out of {})".format(wav_name,k+1,len(waves_list),filename,t+1,len(tgz_list))
@@ -281,7 +281,8 @@ if __name__ == '__main__':
                             update_nowave_inzip = "No .wav files found in zipfile: {}".format(tgz_list[t])
                             logging.info(update_nowave_inzip)
                             print(update_nowave_inzip)
-                        shutil.rmtree('/tmp/audio/'+filename)
+                        tgz_filename = str(Path(filename).name)
+                        shutil.rmtree('/tmp/audio/'+tgz_filename)
                 else:
                     print_message = "No tgz files found in directory: {}".format(label)
                     print(print_message)

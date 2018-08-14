@@ -54,9 +54,13 @@ Then install dependencies via pip:
 (env)...$ pip install _________
 ```
 
-Run speech2mfcc_w_wo_noise_wav_tgz.py in cwd where subdirectories of wave and zip files are located
+After checking the global variables, run speech2mfcc_w_wo_noise_wav_tgz.py in cwd where subdirectories of wave and zip files are located
 ```
 (env)...$ python3 speech2mfcc_w_wo_noise_wav_tgz.py
+```
+
+After checking the global variables, run train_ann_mfcc_basic.py in cwd where mfcc database is located
+```
 (env)...$ python3 train_ann_mfcc_basic.py
 ```
 

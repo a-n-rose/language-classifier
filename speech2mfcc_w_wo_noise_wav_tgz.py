@@ -212,6 +212,17 @@ if __name__ == '__main__':
                         filename = Path(wav).name
                         insert_data(filename,feature, sr, noise_scale,label)
                         conn.commit()
+                        
+                        update = "\nProgress: \nwavefile {} ({} out of {})".format(filename,v+1,len(wavefiles))
+                        dir_percentage = "Appx. {}% through directory {}".format(((v+1)/(len(wavefiles)))*100,label)
+                        total_percentage = "Appx. {}% through all directories".format(((j+1)/(len(dir_list)))*100)
+                    
+                        logging.info(update)
+                        print(dir_percentage)
+                        print(total_percentage)
+                        print(update)
+                                
+                                
                         progress_message = "Progress: \nfinished processing {} \n{} % wavefiles completed. \nDirectories processed: {}/{}".format(filename,(v+1/len(wavefiles)*100),j+1,len(dir_list))
                         print(progress_message)
                         logging.info(progress_message)
@@ -239,11 +250,16 @@ if __name__ == '__main__':
                                 wav_name = str(Path(wav).name)
                                 insert_data(filename+'_'+wav_name,feature, sr, noise_scale,label)
                                 conn.commit()
-                                update = "\nProgress: \nwavefile {} ({}) out of {}\ntgz file {} ({}) out of {}".format(k+1,wav_name,len(waves_list),t+1,filename,len(tgz_list))
-                                percentage = "{}% through tgz file {}\n".format(((k+1)/(len(waves_list)))*100,filename)
+                                
+                                update = "\nProgress: \nwavefile {} ({} out of {})\ntgz file {} ({} out of {})".format(wav_name,k+1,len(waves_list),filename,t+1,len(tgz_list))
+                                percentage = "Appx. {}% through file {}".format(((k+1)/(len(waves_list)))*100,filename)
+                                dir_percentage = "Appx. {}% through directory {}".format(((t+1)/(len(tgz_list)))*100,label)
+                                total_percentage = "Appx. {}% through all directories".format(((j+1)/(len(dir_list)))*100)
                             
                                 logging.info(update)
                                 print(percentage)
+                                print(dir_percentage)
+                                print(total_percentage)
                                 print(update)
                         else:
                             update_nowave_inzip = "No .wav files found in zipfile: {}".format(tgz_list[t])

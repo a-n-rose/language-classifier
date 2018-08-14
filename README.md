@@ -72,7 +72,7 @@ To deactivate the environment:
 ## ToDo
 * Use MFCCs to train algorithms
 * limit number of rows pulled out for training --> set up batch training 
-* print "are these variables correct?" (global variables) when asking for input (checking whether or not someone has put in the right global variables)
+* download additional languages and add to training data
 
 ## License
 

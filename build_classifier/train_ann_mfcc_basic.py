@@ -18,18 +18,19 @@ from pympler import tracker
 database = 'sp_mfcc.db'
 database_name = os.path.splitext(database)[0]
 table = 'mfcc_40'
-batchsize = 100
-epochs = 10
+num_mfcc = 39
+batchsize = 10
+epochs = 50
 #number of layers in NN, including input and output layers:
 tot_layers = 3
-tot_numrows = 100000
+tot_numrows = 200000
 percentage_train = 0.8 #maintaining 80% train and 20% test
 percentage_test = 0.2
 dependent_variables = ['English','German']
 var_names = ', '.join(dependent_variables)
 var_names_underscore = '_'.join(dependent_variables)
 type_nn = 'ANN'
-modelname = '{}_DB_{}_TABLE_{}_batchsize{}_epochs{}_numrows{}_{}_numlayers{}'.format(type_nn,database_name,table,batchsize,epochs,tot_numrows,var_names_underscore,tot_layers)#might be overkill...
+modelname = '{}_DB_{}_TABLE_{}_numMFCC{}_batchsize{}_epochs{}_numrows{}_{}_numlayers{}'.format(type_nn,database_name,table,num_mfcc,batchsize,epochs,tot_numrows,var_names_underscore,tot_layers)#might be overkill...
 
 
 
@@ -85,6 +86,7 @@ if __name__ == '__main__':
         
         print("\n\nLoading data from \nDATABASE: '{}'\nTABLE: '{}'\n".format(database,table))
         print("Dependent variables are: {}".format(var_names))
+        print("Number of MFCCs used: {}".format(num_mfcc))
         print("Total number of rows pulled from the table: {}".format(tot_numrows))
         print("Model will be saved as: {}".format(modelname))
         print("Total number of layers in the model (including input and output): {}".format(tot_layers))
@@ -110,13 +112,15 @@ if __name__ == '__main__':
             variable_train_rows = int(num_train_rows/len(dependent_variables))
             variable_test_rows = int(num_test_rows/len(dependent_variables))
             
+            print("Collecting data..")
+            
             df_train = pd.DataFrame()
             #df_validate = pd.DataFrame()
             df_test = pd.DataFrame()
             for var in dependent_variables:
                 
                 #import train (1), validate(2) and test (3) data sets 
-                c.execute("SELECT * FROM {} WHERE dataset='{}' AND label='{}' LIMIT {}".format(table,1,var,num_train_rows))
+                c.execute("SELECT * FROM {} WHERE dataset='{}' AND label='{}' LIMIT {}".format(table,1,var,variable_train_rows))
                 data = c.fetchall()
                 train = pd.DataFrame(data)
                 df_train = df_train.append(train,ignore_index=True)
@@ -127,19 +131,19 @@ if __name__ == '__main__':
                 #df_validate = df_validate.append(validate, ignore_index=True)
                 
                 
-                c.execute("SELECT * FROM {} WHERE dataset='{}' AND label='{}' LIMIT {}".format(table,3,var,num_test_rows))
+                c.execute("SELECT * FROM {} WHERE dataset='{}' AND label='{}' LIMIT {}".format(table,3,var,variable_test_rows))
                 data = c.fetchall()
                 test = pd.DataFrame(data)
                 df_test = df_test.append(test,ignore_index=True)
             
             #should apply limits/ensure a healthy balance
-            X_train = df_train.iloc[:,:40].values
+            X_train = df_train.iloc[:,1:40].values
             y_train = df_train.iloc[:,-1].values
             
-            #X_val = df_validate.iloc[:,:40].values
+            #X_val = df_validate.iloc[:,1:40].values
             #y_val = df_validate.iloc[:,-1].values
             
-            X_test = df_test.iloc[:,:40].values
+            X_test = df_test.iloc[:,1:40].values
             y_test = df_test.iloc[:,-1].values
 
 
@@ -163,6 +167,7 @@ if __name__ == '__main__':
             from keras.models import Sequential
             from keras.layers import Dense
             
+            print("Building the model..")
             #set up model variables:
             classifier = Sequential()
             classifier_name = 'sequential'
@@ -187,6 +192,7 @@ if __name__ == '__main__':
             
             classifier.add(Dense(activation=activation_output,units=units_output,kernel_initializer=kernel_initializer))
             
+            print("Training the model..")
             classifier.compile(optimizer=optimizer,loss=loss,metrics=metrics)
             
             #numbers: batchsize and epochs
@@ -198,9 +204,14 @@ if __name__ == '__main__':
             from sklearn.metrics import confusion_matrix
             y_test = y_test.astype(bool)
             cm = confusion_matrix(y_test,y_pred)
+            cm_info = "Confusion Matrix:\n{}".format(cm)
+            logging.info(cm_info)
+            print(cm_info)
             score = classifier.evaluate(X_train,y_train,verbose=0)
             acc = "%s: %.2f%%" % (classifier.metrics_names[1], score[1]*100)
+            print("Model Accuracy:")
             print(acc)
+            logging.info("Model Accuracy: {}".format(acc))
             
             model_json = classifier.to_json()
             with open(modelname+'.json','w') as json_file:
@@ -211,7 +222,7 @@ if __name__ == '__main__':
             timepassed_message = 'Elapsed time in hours: {}'.format(elapsed_time_hours)
             
 
-            info_message = "\n\nFinished Training Model: {} \nPurpose: to classify data as {}\n\nData Used for Training: \nDatabase = '{}'\nTable = '{}'\nNumber of rows for training data = {}\nNumber of rows for test data = {}\nTotal number of rows used = {}   \n\nModel Specifications:\nClassifer = {}\nInput dimensions = {}\nKernel initializer = {}\nActivation (layers) = {}\nActivation (output) = {}\nNumber of units (layers) = {}\nNumber of output units = {}\nOptimizer = {}\nLoss = {}\nMetrics = {}\nNumber of layers (including input and output layers) = {}\n\n{}\n ".format(modelname,var_names,database,table,num_train_rows,num_test_rows,tot_numrows, classifier_name,input_dim,kernel_initializer,activation_layers,activation_output,units_layers,units_output,optimizer,loss,metrics,tot_layers,timepassed_message)
+            info_message = "\n\nFinished Training Model: {}\n{}\nPurpose: to classify data as {}\n\nData Used for Training: \nDatabase = '{}'\nTable = '{}'\nNumber of rows for training data (per dependent variable) = {}\nNumber of rows for test data (per dependent variable) = {}\nTotal number of rows used = {}   \n\nModel Specifications:\nClassifer = {}\nInput dimensions = {}\nKernel initializer = {}\nActivation (layers) = {}\nActivation (output) = {}\nNumber of units (layers) = {}\nNumber of output units = {}\nOptimizer = {}\nLoss = {}\nMetrics = {}\nNumber of layers (including input and output layers) = {}\n\n{}\n ".format(modelname,acc,var_names,database,table,variable_train_rows,variable_test_rows,tot_numrows, classifier_name,input_dim,kernel_initializer,activation_layers,activation_output,units_layers,units_output,optimizer,loss,metrics,tot_layers,timepassed_message)
             print(info_message)
             logging.info(info_message)
         else:

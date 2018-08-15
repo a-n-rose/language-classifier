@@ -71,8 +71,8 @@ To deactivate the environment:
 ```
 
 ## ToDo
-* Use MFCCs to train algorithms
-* Limit number of rows pulled out for training --> set up batch training 
+* Set up batch training 
+* Compare different MFCCs' inclusion in training (taking away 1st coefficient, using the first 13, using 2-13, using 1-20, etc.)
 * Download additional languages and add to training data
 * Develop app to apply model to a new user's speech
 

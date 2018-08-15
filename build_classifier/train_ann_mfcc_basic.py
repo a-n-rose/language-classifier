@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import sqlite3
 import time
+import os
 
 import logging
 import logging.handlers
@@ -14,19 +15,21 @@ logger = logging.getLogger(__name__)
 from pympler import tracker
 
 #import dataset
-database = 'sp_mfcc_traintvalest_multiplespeakers.db'
+database = 'sp_mfcc.db'
+database_name = os.path.splitext(database)[0]
 table = 'mfcc_40'
 batchsize = 100
-epochs = 2
-modelname = 'ann_mfcc_matchednoise_eng_germ_test'#just an example
+epochs = 10
 #number of layers in NN, including input and output layers:
 tot_layers = 3
-tot_numrows = 200
+tot_numrows = 100000
 percentage_train = 0.8 #maintaining 80% train and 20% test
 percentage_test = 0.2
 dependent_variables = ['English','German']
 var_names = ', '.join(dependent_variables)
+var_names_underscore = '_'.join(dependent_variables)
 type_nn = 'ANN'
+modelname = '{}_DB_{}_TABLE_{}_batchsize{}_epochs{}_numrows{}_{}_numlayers{}'.format(type_nn,database_name,table,batchsize,epochs,tot_numrows,var_names_underscore,tot_layers)#might be overkill...
 
 
 
@@ -206,10 +209,9 @@ if __name__ == '__main__':
             print('Done!')
             elapsed_time_hours = (time.time()-prog_start)/3600
             timepassed_message = 'Elapsed time in hours: {}'.format(elapsed_time_hours)
-            print(timepassed_message)
             
-            
-            info_message = "Finished Training Model: {} \nPurpose: to classify data as {}\n\nData: \nFrom the database '{}' and table '{}'\nNumber of rows per variable for training data = {}\nNumber of rows per variable for test data = {}\nTotal number of rows used in training model = {}   \n\nSpecifications:\nclassifer = {}\nInput dimensions = {}\nKernel initializer = {}\nActivation (layers) = {}\nActivation (output) = {}\nNumber of units (within layers) = {}\nNumber of output labels = {}\nOptimizer = {}\nLoss = {}\nMetrics = {}\nNumber of layers (including input and output layers) = {}\n\n{} ".format(modelname,var_names,database,table,num_train_rows,num_test_rows,tot_numrows, classifier_name,input_dim,kernel_initializer,activation_layers,activation_output,units_layers,units_output,optimizer,loss,metrics,tot_layers,timepassed_message)
+
+            info_message = "\n\nFinished Training Model: {} \nPurpose: to classify data as {}\n\nData Used for Training: \nDatabase = '{}'\nTable = '{}'\nNumber of rows for training data = {}\nNumber of rows for test data = {}\nTotal number of rows used = {}   \n\nModel Specifications:\nClassifer = {}\nInput dimensions = {}\nKernel initializer = {}\nActivation (layers) = {}\nActivation (output) = {}\nNumber of units (layers) = {}\nNumber of output units = {}\nOptimizer = {}\nLoss = {}\nMetrics = {}\nNumber of layers (including input and output layers) = {}\n\n{}\n ".format(modelname,var_names,database,table,num_train_rows,num_test_rows,tot_numrows, classifier_name,input_dim,kernel_initializer,activation_layers,activation_output,units_layers,units_output,optimizer,loss,metrics,tot_layers,timepassed_message)
             print(info_message)
             logging.info(info_message)
         else:

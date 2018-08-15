@@ -37,7 +37,7 @@ With a lot of speech data, this will take several hours.
 
 ### Prerequisites
 
-You need a machine with at least 20GiB of free memory (I would aim for more). Make sure you can let this machine run for several hours for each step for each language (i.e. 1) download 2) extract MFCCs 3) train models). 
+You need a machine with around 60GiB of free memory (I would aim for more). Make sure you can let this machine run for several hours for each step for each language (i.e. 1) download 2) extract MFCCs 3) train models). 
 
 For required installations (i.e. versions used building this), please refer to the installations.md file.
 
@@ -58,7 +58,7 @@ After checking the global variables, run speech2mfcc_w_wo_noise_wav_tgz.py in cw
 ```
 (env)...$ python3 speech2mfcc_w_wo_noise_wav_tgz.py
 ```
-I ran this script with the '48kHz_16bit' folder from the English dataset in a 'English' subdirectory and the 'train' folder from the German dataset in a 'German'subdirectory. It took this script appx. 12 hours to extract the MFCCs from these audio files.
+I ran this script with the '48kHz_16bit' folder from the English dataset in a 'English' subdirectory and the 'train' folder from the German dataset in a 'German'subdirectory. It took this script appx. 16 hours to extract the MFCCs from these audio files.
 
 After checking the global variables, run train_ann_mfcc_basic.py in cwd where mfcc database is located
 ```

@@ -24,7 +24,6 @@ import sqlite3
 from sqlite3 import Error
 from pathlib import Path
 import time
-import datetime
 import random
 import logging
 import logging.handlers
@@ -176,6 +175,8 @@ if __name__ == '__main__':
         check_variables = input("\nIMPORTANT!!!!\nAre the items listed above correct? (Y or N): ")
         if 'y' in check_variables.lower():
 
+            prog_start = time.time()
+            logging.info(prog_start)
             #load environment noise to be added to training data
             if environment_noise: 
                 try:
@@ -186,8 +187,6 @@ if __name__ == '__main__':
             else:
                 env_noise = None
 
-            prog_start = time.time()
-            logging.info(prog_start)
             columns = list((range(0,num_mfcc)))
             column_type = []
             for i in columns:

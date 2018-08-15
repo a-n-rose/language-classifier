@@ -18,9 +18,9 @@ This has been structured so that if the zipfile is extracted, tons of memory wil
 
 2) Structure the speech files so that in your cwd all the English (or whatever language files) are located in a subdirectory called 'English' and German files in a 'German' subdirectory. The name of each subdirectory will be used as the categorical label for the speech files within them. (It doesn't matter if the wave/zip files are in additional subdirectories within the language (i.e. 'English', 'German') folder, just as long as they are within their corresponding language directory.)
 
-Note: when extracting MFCCs, this script expects a one-to-one ratio of speaker and wavefile/tgzfile. It assigns each wavefile and tgzfile to either the train, validate, or test data sets. This is to avoid mixing a speaker's data between groups. While this might not work 100%, it would at least help avoid too much mixing (something I plan on comparing down-the-line). If this doesn't work with your data, ignore the column 'dataset'. Another way you could create train, validate, and test datasets is to create them as subdirectories of the cwd (i.e. 'English_train', 'English_test') and place the corresponding audio files into those subdirectories.
+Note: when extracting MFCCs, this script expects a one-to-one ratio of speaker and wavefile/tgzfile. It assigns each wavefile and tgzfile to either the train, validate, or test data sets. This is to avoid mixing a speaker's data between groups. While this might not work 100%, it would at least help avoiding too much mixing (something I plan on comparing down-the-line). If this doesn't work with your data, ignore the column 'dataset'. Another way you could create train, validate, and test datasets is to create them as subdirectories of the cwd (i.e. 'English_train', 'English_test') and place the corresponding audio files into those subdirectories. 
 
-3) *Before* running the script 'speech2mfcc_w_wo_noise_wav_tgz.py':
+3) *Before* running the script 'speech2mfcc_w_wo_noise_wav_tgz.py' (see folder 'extract_mfcc'):
 * Check the global variables, i.e. database name, the noise group label, etc.
 * If you want to apply noise, have a noise wavefile in the cwd and input that into the script
 * Depending on how the script is set up, it expects a background noise wavefile to apply background noise to the training data. For now it just uses one file from the cwd and pulls random snippets of the noise to apply to the speech data.
@@ -30,14 +30,14 @@ Note: when extracting MFCCs, this script expects a one-to-one ratio of speaker a
 
 With a lot of speech data, this will take several hours.
 
-5) *Before* running the script 'train_ann_mfcc_basic.py':
+5) *Before* running the script 'train_ann_mfcc_basic.py' (see folder 'build_classifier'):
 * Check global variables, i.e. database name, table name, batchsize, epochs, and the name the model should be saved under.
 
-6) run 'train_ann_mfcc_basic.py' in same directory as the database
+6) run 'train_ann_mfcc_basic.py' in same directory as the database.
 
 ### Prerequisites
 
-You need a machine with at least 20GiB of free memory (I would aim for more). Make sure you can let this machine run for several hours for each step for each language (i.e. 1) download 2) extract MFCCs 3) train models)
+You need a machine with at least 20GiB of free memory (I would aim for more). Make sure you can let this machine run for several hours for each step for each language (i.e. 1) download 2) extract MFCCs 3) train models). 
 
 For required installations (i.e. versions used building this), please refer to the installations.md file.
 
@@ -58,6 +58,7 @@ After checking the global variables, run speech2mfcc_w_wo_noise_wav_tgz.py in cw
 ```
 (env)...$ python3 speech2mfcc_w_wo_noise_wav_tgz.py
 ```
+I ran this script with the '48kHz_16bit' folder from the English dataset in a 'English' subdirectory and the 'train' folder from the German dataset in a 'German'subdirectory. It took this script appx. 12 hours to extract the MFCCs from these audio files.
 
 After checking the global variables, run train_ann_mfcc_basic.py in cwd where mfcc database is located
 ```
@@ -71,8 +72,9 @@ To deactivate the environment:
 
 ## ToDo
 * Use MFCCs to train algorithms
-* limit number of rows pulled out for training --> set up batch training 
-* download additional languages and add to training data
+* Limit number of rows pulled out for training --> set up batch training 
+* Download additional languages and add to training data
+* Develop app to apply model to a new user's speech
 
 ## License
 

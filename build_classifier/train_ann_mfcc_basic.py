@@ -6,6 +6,7 @@ basic version: using only train and test datasets (not yet validation)
 import numpy as np
 import pandas as pd
 import sqlite3
+import time
 
 import logging
 import logging.handlers
@@ -13,11 +14,20 @@ logger = logging.getLogger(__name__)
 from pympler import tracker
 
 #import dataset
-database = 'sp_mfcc.db'
+database = 'sp_mfcc_traintvalest_multiplespeakers.db'
 table = 'mfcc_40'
-batchsize = 10
-epochs = 10
-modelname = 'mfcc_matched_eng_germ'#just an example
+batchsize = 100
+epochs = 2
+modelname = 'ann_mfcc_matchednoise_eng_germ_test'#just an example
+#number of layers in NN, including input and output layers:
+tot_layers = 3
+tot_numrows = 200
+percentage_train = 0.8 #maintaining 80% train and 20% test
+percentage_test = 0.2
+dependent_variables = ['English','German']
+var_names = ', '.join(dependent_variables)
+type_nn = 'ANN'
+
 
 
 if __name__ == '__main__':
@@ -69,21 +79,55 @@ if __name__ == '__main__':
         conn = sqlite3.connect(database)
         c = conn.cursor()
         
-        check_variables = input("\nIMPORTANT!!!!\nHave you checked the global variables at the top of this script? Especially how the model should be saved? It would be a pity to save over a previous model... (Y or N): ")
+        
+        print("\n\nLoading data from \nDATABASE: '{}'\nTABLE: '{}'\n".format(database,table))
+        print("Dependent variables are: {}".format(var_names))
+        print("Total number of rows pulled from the table: {}".format(tot_numrows))
+        print("Model will be saved as: {}".format(modelname))
+        print("Total number of layers in the model (including input and output): {}".format(tot_layers))
+        print("Batchsize: {}".format(batchsize))
+        print("Epochs: {}".format(epochs))
+        print("Type of model: {}".format(type_nn))
+        
+        check_variables = input("\nIMPORTANT!!!!\nAre the items listed above correct? (Y or N): ")
         if 'y' in check_variables.lower():
 
-            #import train (1), validate(2) and test (3) data sets 
-            c.execute("SELECT * FROM {} WHERE dataset='{}'".format(table,1))
-            dataset_train = c.fetchall()
-            df_train = pd.DataFrame(dataset_train)
+            prog_start = time.time()
+            logging.info(prog_start)
             
-            #c.execute("SELECT * FROM {} WHERE dataset='{}'".format(table,2))
-            #dataset_validate = c.fetchall()
-            #df_validate = pd.DataFrame(dataset_validate)
+            #calculate number of rows from training and test data:
+            if percentage_train + percentage_test == 1.0:
+                num_train_rows = int(tot_numrows*percentage_train)
+                num_test_rows = int(tot_numrows*percentage_test)
+            else:
+                num_train_rows = int(tot_numrows*0.8)
+                num_test_rows = int(tot_numrows*0.2)
             
-            c.execute("SELECT * FROM {} WHERE dataset='{}'".format(table,3))
-            dataset_test = c.fetchall()
-            df_test = pd.DataFrame(dataset_test)
+            
+            variable_train_rows = int(num_train_rows/len(dependent_variables))
+            variable_test_rows = int(num_test_rows/len(dependent_variables))
+            
+            df_train = pd.DataFrame()
+            #df_validate = pd.DataFrame()
+            df_test = pd.DataFrame()
+            for var in dependent_variables:
+                
+                #import train (1), validate(2) and test (3) data sets 
+                c.execute("SELECT * FROM {} WHERE dataset='{}' AND label='{}' LIMIT {}".format(table,1,var,num_train_rows))
+                data = c.fetchall()
+                train = pd.DataFrame(data)
+                df_train = df_train.append(train,ignore_index=True)
+                
+                #c.execute("SELECT * FROM {} WHERE dataset='{}' AND label = '{}' LIMIT {}".format(table,2,var,num_test_rows))
+                #data = c.fetchall()
+                #validate = pd.DataFrame(data)
+                #df_validate = df_validate.append(validate, ignore_index=True)
+                
+                
+                c.execute("SELECT * FROM {} WHERE dataset='{}' AND label='{}' LIMIT {}".format(table,3,var,num_test_rows))
+                data = c.fetchall()
+                test = pd.DataFrame(data)
+                df_test = df_test.append(test,ignore_index=True)
             
             #should apply limits/ensure a healthy balance
             X_train = df_train.iloc[:,:40].values
@@ -107,22 +151,40 @@ if __name__ == '__main__':
             from sklearn.preprocessing import StandardScaler
             sc = StandardScaler()
             X_train = sc.fit_transform(X_train)
-            X_test = sc.transform(X_test)
             #X_val = sc.transform(X_val)
+            X_test = sc.transform(X_test)
+            
 
             #ANN
             import keras
             from keras.models import Sequential
             from keras.layers import Dense
             
+            #set up model variables:
             classifier = Sequential()
-            classifier.add(Dense(activation = 'relu',units=20,input_dim=X_train.shape[1],kernel_initializer='uniform'))
+            classifier_name = 'sequential'
+            input_dim = X_train.shape[1]
+            kernel_initializer = 'uniform'
+            activation_layers = 'relu'
+            activation_output = 'sigmoid'
+            num_labels = len(np.unique(y_train))
+            if num_labels == 2:
+                num_labels = 1
+            units_layers = int((input_dim+num_labels)/2) 
+            units_output = num_labels
             
-            classifier.add(Dense(activation='relu',units=20,kernel_initializer='uniform'))
+            #optimization
+            optimizer = 'adam'
+            loss = 'binary_crossentropy'
+            metrics = ['accuracy']
+
+            classifier.add(Dense(activation = activation_layers,units=units_layers,input_dim=input_dim,kernel_initializer=kernel_initializer))
             
-            classifier.add(Dense(activation='sigmoid',units=1,kernel_initializer='uniform'))
+            classifier.add(Dense(activation=activation_layers,units=units_layers,kernel_initializer=kernel_initializer))
             
-            classifier.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+            classifier.add(Dense(activation=activation_output,units=units_output,kernel_initializer=kernel_initializer))
+            
+            classifier.compile(optimizer=optimizer,loss=loss,metrics=metrics)
             
             #numbers: batchsize and epochs
             classifier.fit(X_train,y_train,batchsize,epochs)
@@ -142,13 +204,23 @@ if __name__ == '__main__':
                 json_file.write(model_json)
             classifier.save_weights(modelname+'.h5')
             print('Done!')
+            elapsed_time_hours = (time.time()-prog_start)/3600
+            timepassed_message = 'Elapsed time in hours: {}'.format(elapsed_time_hours)
+            print(timepassed_message)
+            
+            
+            info_message = "Finished Training Model: {} \nPurpose: to classify data as {}\n\nData: \nFrom the database '{}' and table '{}'\nNumber of rows per variable for training data = {}\nNumber of rows per variable for test data = {}\nTotal number of rows used in training model = {}   \n\nSpecifications:\nclassifer = {}\nInput dimensions = {}\nKernel initializer = {}\nActivation (layers) = {}\nActivation (output) = {}\nNumber of units (within layers) = {}\nNumber of output labels = {}\nOptimizer = {}\nLoss = {}\nMetrics = {}\nNumber of layers (including input and output layers) = {}\n\n{} ".format(modelname,var_names,database,table,num_train_rows,num_test_rows,tot_numrows, classifier_name,input_dim,kernel_initializer,activation_layers,activation_output,units_layers,units_output,optimizer,loss,metrics,tot_layers,timepassed_message)
+            print(info_message)
+            logging.info(info_message)
         else:
             print_message = "\nRun the script after you check the global variables."
             print(print_message)
             logging.info(print_message)
     except sqlite3.Error as e:
+        print("Database error {}".format(e))
         logging.exception("Database error: %s" % e)
     except Exception as e:
+        print("Error occurred: {}".format(e))
         logging.exception("Error occurred: %s" % e)
     finally:
         if conn:

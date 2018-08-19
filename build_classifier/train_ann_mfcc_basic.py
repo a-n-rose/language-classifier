@@ -8,6 +8,7 @@ import pandas as pd
 import sqlite3
 import time
 import os
+from ann_visualizer.visualize import ann_viz
 
 import logging
 import logging.handlers
@@ -23,13 +24,13 @@ batchsize = 100
 epochs = 50
 #number of layers in NN, including input and output layers:
 tot_layers = 3
-tot_numrows = 2000000
+tot_numrows = 1500000
 percentage_train = 0.8 #maintaining 80% train and 20% test
 percentage_test = 0.2
 dependent_variables = ['English','German']
 var_names = ', '.join(dependent_variables)
 var_names_underscore = '_'.join(dependent_variables)
-noise_level = 1.25  #options: 0   0.25    0.5    0.75    1   1.25
+noise_level = 0  #options: 0   0.25    0.5    0.75    1   1.25
 noise_type='matched'
 type_nn = 'ANN'
 modelname = '{}_DB_{}_TABLE_{}_numMFCC{}_batchsize{}_epochs{}_numrows{}_{}_numlayers{}_normalizedWstdmean_noiselevel{}{}'.format(type_nn,database_name,table,num_mfcc,batchsize,epochs,tot_numrows,var_names_underscore,tot_layers,noise_level,noise_type)#might be overkill...
@@ -221,6 +222,8 @@ if __name__ == '__main__':
             print("Model Accuracy:")
             print(acc)
             logging.info("Model Accuracy: {}".format(acc))
+            
+            ann_viz(classifier, view=True, filename = modelname)
             
             model_json = classifier.to_json()
             with open(modelname+'.json','w') as json_file:

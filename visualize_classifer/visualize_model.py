@@ -1,5 +1,6 @@
 import keras
 from keras.models import model_from_json
+from keras.utils import plot_model
 import pandas as pd
 import numpy as np
 from ann_visualizer.visualize import ann_viz
@@ -25,5 +26,8 @@ for model in glob.glob('*.json'):
     #try visualizing it
     #view = True will result in .pdf files of visualization
     ann_viz(classifier,view=True, filename='Visualize_'+classifier_name,title='English German Classifier: Simple ANN')
+    plot_model(classifier,to_file='VisualizeLayers_'+classifier_name+'.png',show_shapes=True,show_layer_names=True)
     
 print("Models have been visualized")
+
+

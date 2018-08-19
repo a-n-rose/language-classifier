@@ -18,19 +18,21 @@ from pympler import tracker
 database = 'sp_mfcc.db'
 database_name = os.path.splitext(database)[0]
 table = 'mfcc_40'
-num_mfcc = 39
-batchsize = 10
+num_mfcc = 40
+batchsize = 100
 epochs = 50
 #number of layers in NN, including input and output layers:
 tot_layers = 3
-tot_numrows = 200000
+tot_numrows = 2000000
 percentage_train = 0.8 #maintaining 80% train and 20% test
 percentage_test = 0.2
 dependent_variables = ['English','German']
 var_names = ', '.join(dependent_variables)
 var_names_underscore = '_'.join(dependent_variables)
+noise_level = 1.25  #options: 0   0.25    0.5    0.75    1   1.25
+noise_type='matched'
 type_nn = 'ANN'
-modelname = '{}_DB_{}_TABLE_{}_numMFCC{}_batchsize{}_epochs{}_numrows{}_{}_numlayers{}'.format(type_nn,database_name,table,num_mfcc,batchsize,epochs,tot_numrows,var_names_underscore,tot_layers)#might be overkill...
+modelname = '{}_DB_{}_TABLE_{}_numMFCC{}_batchsize{}_epochs{}_numrows{}_{}_numlayers{}_normalizedWstdmean_noiselevel{}{}'.format(type_nn,database_name,table,num_mfcc,batchsize,epochs,tot_numrows,var_names_underscore,tot_layers,noise_level,noise_type)#might be overkill...
 
 
 
@@ -117,10 +119,11 @@ if __name__ == '__main__':
             df_train = pd.DataFrame()
             #df_validate = pd.DataFrame()
             df_test = pd.DataFrame()
+            
             for var in dependent_variables:
                 
                 #import train (1), validate(2) and test (3) data sets 
-                c.execute("SELECT * FROM {} WHERE dataset='{}' AND label='{}' LIMIT {}".format(table,1,var,variable_train_rows))
+                c.execute("SELECT * FROM {} WHERE dataset='{}' AND noiselevel='{}' AND label='{}' LIMIT {}".format(table,1,noise_level,var,variable_train_rows))
                 data = c.fetchall()
                 train = pd.DataFrame(data)
                 df_train = df_train.append(train,ignore_index=True)
@@ -131,21 +134,27 @@ if __name__ == '__main__':
                 #df_validate = df_validate.append(validate, ignore_index=True)
                 
                 
-                c.execute("SELECT * FROM {} WHERE dataset='{}' AND label='{}' LIMIT {}".format(table,3,var,variable_test_rows))
+                c.execute("SELECT * FROM {} WHERE dataset='{}' AND noiselevel='{}' AND label='{}' LIMIT {}".format(table,3,noise_level,var,variable_test_rows))
                 data = c.fetchall()
                 test = pd.DataFrame(data)
                 df_test = df_test.append(test,ignore_index=True)
             
             #should apply limits/ensure a healthy balance
-            X_train = df_train.iloc[:,1:40].values
+            X_train = df_train.iloc[:,:40].values
             y_train = df_train.iloc[:,-1].values
             
-            #X_val = df_validate.iloc[:,1:40].values
+            #X_val = df_validate.iloc[:,:40].values
             #y_val = df_validate.iloc[:,-1].values
             
-            X_test = df_test.iloc[:,1:40].values
+            X_test = df_test.iloc[:,:40].values
             y_test = df_test.iloc[:,-1].values
 
+
+            #Normalize
+            mean = np.mean(X_train, axis=0)
+            std = np.std(X_train,axis=0)
+            X_train = (X_train-mean)/std
+            X_test = (X_test-mean)/std
 
             from sklearn.preprocessing import LabelEncoder, OneHotEncoder
             labelencoder_y = LabelEncoder()

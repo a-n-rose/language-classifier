@@ -23,6 +23,7 @@ for model in glob.glob('*.json'):
     print("Loaded model from disk")
 
     #try visualizing it
-    ann_viz(classifier,view=False, filename='Visualize_'+classifier_name,title='English German Classifier')
+    #view = True will result in .pdf files of visualization
+    ann_viz(classifier,view=True, filename='Visualize_'+classifier_name,title='English German Classifier: Simple ANN')
     
 print("Models have been visualized")

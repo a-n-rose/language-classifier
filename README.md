@@ -37,6 +37,8 @@ With a lot of speech data, this will take several hours.
 
 ### Prerequisites
 
+These scripts were written on a Linux machine and were not tested on others. For example, Glob is used for collection of filenames; I doubt this would work on Macs or Winows.
+
 You need a machine with around 60GiB of free memory (I would aim for more). Make sure you can let this machine run for several hours for each step for each language (i.e. 1) download 2) extract MFCCs 3) train models). 
 
 For required installations (i.e. versions used building this), please refer to the installations.md file.
@@ -73,8 +75,11 @@ To deactivate the environment:
 ## ToDo
 * Set up batch training 
 * Compare different MFCCs' inclusion in training (taking away 1st coefficient, using the first 13, using 2-13, using 1-20, etc.)
+* Apply random noises to MFCC data (something like <a href="http://dcase.community/challenge2018/task-general-purpose-audio-tagging">this</a>?)
+* Compare how well noise conditions do: no noise, matched background, and random
 * Download additional languages and add to training data
 * Develop app to apply model to a new user's speech
+* Train other neural nets with data, i.e. CNN 
 
 ## License
 

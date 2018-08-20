@@ -28,7 +28,7 @@ percentage_test = 0.2
 dependent_variables = ['English','German']
 var_names = ', '.join(dependent_variables)
 var_names_underscore = '_'.join(dependent_variables)
-noise_level = 0.25 #options: 0   0.25    0.5    0.75    1   1.25   None
+noise_level = 1.25 #options: 0   0.25    0.5    0.75    1   1.25   None
 noise_type='matched'
 type_nn = 'ANN'
 if noise_level == None:
@@ -127,7 +127,7 @@ if __name__ == '__main__':
                 label_encoded = i
                 print("This variable is encoded as: {}".format(label_encoded))
                 #import data sets 
-                if noise_level:
+                if noise_level != None:
                         
                     c.execute("SELECT * FROM {} WHERE dataset='{}' AND noiselevel='{}' AND label='{}' LIMIT {}".format(table,1,noise_level,var,variable_train_rows))
                     data = c.fetchall()

@@ -73,7 +73,7 @@ try:
             label_encoded = i
             print(var)
             print(label_encoded)
-            df_var = table2dataframe(c,table,var,500)
+            df_var = table2dataframe(c,table,var)
             df_varcols = df_var.columns
             df_var[df_varcols[-1]] = label_encoded
             df_new = df_new.append(df_var,ignore_index=True)

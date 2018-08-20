@@ -165,17 +165,17 @@ if __name__ == '__main__':
             print("Converting dataframe as matrix")
             
             
-        #based on the number of MFCCs used in training Ive seen so far:
-        if num_mfcc == 40 or num_mfcc == 20 or num_mfcc == 13:
-            a = 0
-            b = num_mfcc
-        #these leave out the first coefficient (dealing w amplitude/volume)
-        elif num_mfcc == 39 or num_mfcc==19 or num_mfcc == 12:
-            a = 1
-            b = num_mfcc+1
-        else:
-            print("No options for number of MFCCs = {}".format(num_mfcc))
-            print("Please choose from 40,39,20,19,13, or 12")
+            #based on the number of MFCCs used in training Ive seen so far:
+            if num_mfcc == 40 or num_mfcc == 20 or num_mfcc == 13:
+                a = 0
+                b = num_mfcc
+            #these leave out the first coefficient (dealing w amplitude/volume)
+            elif num_mfcc == 39 or num_mfcc==19 or num_mfcc == 12:
+                a = 1
+                b = num_mfcc+1
+            else:
+                print("No options for number of MFCCs = {}".format(num_mfcc))
+                print("Please choose from 40,39,20,19,13, or 12")
 
             
             X_train = df_train.iloc[:,a:b].values

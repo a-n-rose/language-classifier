@@ -24,13 +24,13 @@ batchsize = 100
 epochs = 50
 #number of layers in NN, including input and output layers:
 tot_layers = 3
-tot_numrows = 100000
+tot_numrows = 1000
 percentage_train = 0.8 #maintaining 80% train and 20% test
 percentage_test = 0.2
 dependent_variables = ['English','German']
 var_names = ', '.join(dependent_variables)
 var_names_underscore = '_'.join(dependent_variables)
-noise_level = 0  #options: 0   0.25    0.5    0.75    1   1.25   None
+noise_level = 0 #options: 0   0.25    0.5    0.75    1   1.25   None
 noise_type='matched'
 type_nn = 'ANN'
 if noise_level == None:
@@ -129,7 +129,7 @@ if __name__ == '__main__':
                 var = dependent_variables[i]
                 print("Current variable's data being collected = {}".format(var))
                 label_encoded = i
-                print("Label this variable is encoded as: {}".format(label_encoded))
+                print("This variable is encoded as: {}".format(label_encoded))
                 #import data sets 
                 if noise_level:
                         
@@ -154,7 +154,9 @@ if __name__ == '__main__':
                     data = c.fetchall()
                     train = pd.DataFrame(data)
                     col_names = train.columns
+                    print("Label was '{}'".format(train[col_names[-1]][0]))
                     train[col_names[-1]] = label_encoded
+                    print("Now label is '{}'".format(train[col_names[-1]][0]))
                     df_train = df_train.append(train,ignore_index=True)
                     
                     

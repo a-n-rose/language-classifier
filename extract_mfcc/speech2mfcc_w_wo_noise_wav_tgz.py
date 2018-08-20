@@ -102,7 +102,7 @@ def insert_data(filename,feature, sr, noise_scale,dataset_group,label):
         curr_df["dataset"] = dataset_group
         curr_df["label"] = label
         
-        x = curr_df.as_matrix()
+        x = curr_df.values
         num_cols = num_mfcc + len(['filename','noisegroup','noiselevel','dataset','label'])
         col_var = ""
         for i in range(num_cols):

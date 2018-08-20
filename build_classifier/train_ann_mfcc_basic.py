@@ -28,7 +28,7 @@ percentage_test = 0.2
 dependent_variables = ['English','German']
 var_names = ', '.join(dependent_variables)
 var_names_underscore = '_'.join(dependent_variables)
-noise_level = 0 #options: 0   0.25    0.5    0.75    1   1.25   None
+noise_level = 0.25 #options: 0   0.25    0.5    0.75    1   1.25   None
 noise_type='matched'
 type_nn = 'ANN'
 if noise_level == None:
@@ -165,23 +165,19 @@ if __name__ == '__main__':
             print("Converting dataframe as matrix")
             
             
-            if num_mfcc == 40:
-                a = 0
-                b = 40
-            elif num_mfcc == 39:
-                a = 1
-                b = 40
-            elif num_mfcc == 13:
-                a = 0
-                b = 13
-            elif num_mfcc == 12:
-                a = 1
-                b = 13
-            else:
-                print("No options for number of MFCCs = {}".format(num_mfcc))
-                print("Please choose from 40,39,13,12")
+        #based on the number of MFCCs used in training Ive seen so far:
+        if num_mfcc == 40 or num_mfcc == 20 or num_mfcc == 13:
+            a = 0
+            b = num_mfcc
+        #these leave out the first coefficient (dealing w amplitude/volume)
+        elif num_mfcc == 39 or num_mfcc==19 or num_mfcc == 12:
+            a = 1
+            b = num_mfcc+1
+        else:
+            print("No options for number of MFCCs = {}".format(num_mfcc))
+            print("Please choose from 40,39,20,19,13, or 12")
 
-                #should apply limits/ensure a healthy balance
+            
             X_train = df_train.iloc[:,a:b].values
             y_train = df_train.iloc[:,-1].values
             

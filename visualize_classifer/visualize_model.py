@@ -9,7 +9,7 @@ import os
 
 
 #batch visualize:
-for model in glob.glob('*.json'):
+for model in glob.glob('./models/*.json'):
     
     #load json model:
     classifier_name = os.path.splitext(model)[0]

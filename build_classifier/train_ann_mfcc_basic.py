@@ -24,13 +24,13 @@ batchsize = 100
 epochs = 50
 #number of layers in NN, including input and output layers:
 tot_layers = 3
-tot_numrows = 2000000
+tot_numrows = 100000
 percentage_train = 0.8 #maintaining 80% train and 20% test
 percentage_test = 0.2
 dependent_variables = ['English','German']
 var_names = ', '.join(dependent_variables)
 var_names_underscore = '_'.join(dependent_variables)
-noise_level = None  #options: 0   0.25    0.5    0.75    1   1.25   None
+noise_level = 0  #options: 0   0.25    0.5    0.75    1   1.25   None
 noise_type='matched'
 type_nn = 'ANN'
 if noise_level == None:
@@ -122,109 +122,88 @@ if __name__ == '__main__':
             print("Collecting data..")
             
             df_train = pd.DataFrame()
-            #df_validate = pd.DataFrame()
             df_test = pd.DataFrame()
+        
             
-            for var in dependent_variables:
-                
-                #import train (1), validate(2) and test (3) data sets 
+            for i in range(len(dependent_variables)):
+                var = dependent_variables[i]
+                print("Current variable's data being collected = {}".format(var))
+                label_encoded = i
+                print("Label this variable is encoded as: {}".format(label_encoded))
+                #import data sets 
                 if noise_level:
                         
                     c.execute("SELECT * FROM {} WHERE dataset='{}' AND noiselevel='{}' AND label='{}' LIMIT {}".format(table,1,noise_level,var,variable_train_rows))
                     data = c.fetchall()
                     train = pd.DataFrame(data)
+                    col_names = train.columns
+                    print("Label was '{}'".format(train[col_names[-1]][0]))
+                    train[col_names[-1]] = label_encoded
+                    print("Now label is '{}'".format(train[col_names[-1]][0]))
                     df_train = df_train.append(train,ignore_index=True)
-                    
-                    #c.execute("SELECT * FROM {} WHERE dataset='{}' AND noiselevel='{}' AND label='{}' LIMIT {}".format(table,2,noise_level,var,variable_train_rows))
-                    #data = c.fetchall()
-                    #validate = pd.DataFrame(data)
-                    #df_validate = df_validate.append(validate, ignore_index=True)
                     
                     
                     c.execute("SELECT * FROM {} WHERE dataset='{}' AND noiselevel='{}' AND label='{}' LIMIT {}".format(table,3,noise_level,var,variable_test_rows))
                     data = c.fetchall()
                     test = pd.DataFrame(data)
+                    col_names = test.columns
+                    test[col_names[-1]] = label_encoded
                     df_test = df_test.append(test,ignore_index=True)
                 else:
                     c.execute("SELECT * FROM {} WHERE dataset='{}' AND label='{}' LIMIT {}".format(table,1,var,variable_train_rows))
                     data = c.fetchall()
                     train = pd.DataFrame(data)
+                    col_names = train.columns
+                    train[col_names[-1]] = label_encoded
                     df_train = df_train.append(train,ignore_index=True)
-                    
-                    #c.execute("SELECT * FROM {} WHERE dataset='{}' AND label = '{}' LIMIT {}".format(table,2,var,num_test_rows))
-                    #data = c.fetchall()
-                    #validate = pd.DataFrame(data)
-                    #df_validate = df_validate.append(validate, ignore_index=True)
                     
                     
                     c.execute("SELECT * FROM {} WHERE dataset='{}' AND label='{}' LIMIT {}".format(table,3,var,variable_test_rows))
                     data = c.fetchall()
                     test = pd.DataFrame(data)
+                    col_names = test.columns
+                    test[col_names[-1]] = label_encoded
                     df_test = df_test.append(test,ignore_index=True)
-                    
+            print("Converting dataframe as matrix")
+            
             
             if num_mfcc == 40:
-                #should apply limits/ensure a healthy balance
-                X_train = df_train.iloc[:,:40].values
-                y_train = df_train.iloc[:,-1].values
-                
-                #X_val = df_validate.iloc[:,:40].values
-                #y_val = df_validate.iloc[:,-1].values
-                
-                X_test = df_test.iloc[:,:40].values
-                y_test = df_test.iloc[:,-1].values
+                a = 0
+                b = 40
             elif num_mfcc == 39:
-                #should apply limits/ensure a healthy balance
-                X_train = df_train.iloc[:,1:40].values
-                y_train = df_train.iloc[:,-1].values
-                
-                #X_val = df_validate.iloc[:,1:40].values
-                #y_val = df_validate.iloc[:,-1].values
-                
-                X_test = df_test.iloc[:,1:40].values
-                y_test = df_test.iloc[:,-1].values
+                a = 1
+                b = 40
             elif num_mfcc == 13:
-                #should apply limits/ensure a healthy balance
-                X_train = df_train.iloc[:,:13].values
-                y_train = df_train.iloc[:,-1].values
-                
-                #X_val = df_validate.iloc[:,:13].values
-                #y_val = df_validate.iloc[:,-1].values
-                
-                X_test = df_test.iloc[:,:13].values
-                y_test = df_test.iloc[:,-1].values
+                a = 0
+                b = 13
             elif num_mfcc == 12:
-                #should apply limits/ensure a healthy balance
-                X_train = df_train.iloc[:,1:13].values
-                y_train = df_train.iloc[:,-1].values
-                
-                #X_val = df_validate.iloc[:,1:13].values
-                #y_val = df_validate.iloc[:,-1].values
-                
-                X_test = df_test.iloc[:,1:13].values
-                y_test = df_test.iloc[:,-1].values
+                a = 1
+                b = 13
             else:
                 print("No options for number of MFCCs = {}".format(num_mfcc))
                 print("Please choose from 40,39,13,12")
+
+                #should apply limits/ensure a healthy balance
+            X_train = df_train.iloc[:,a:b].values
+            y_train = df_train.iloc[:,-1].values
+            
+
+            X_test = df_test.iloc[:,a:b].values
+            y_test = df_test.iloc[:,-1].values
+                
             
             #Normalize
+            print("Normalizing data")
             mean = np.mean(X_train, axis=0)
             std = np.std(X_train,axis=0)
             X_train = (X_train-mean)/std
             X_test = (X_test-mean)/std
-
-            from sklearn.preprocessing import LabelEncoder
-            labelencoder_y = LabelEncoder()
-            y_train = labelencoder_y.fit_transform(y_train)
-            #y_val =labelencoder_y.fit_transform(y_val)
-            y_test = labelencoder_y.fit_transform(y_test)
-
             
             #feature scaling
+            print("Scaling data")
             from sklearn.preprocessing import StandardScaler
             sc = StandardScaler()
             X_train = sc.fit_transform(X_train)
-            #X_val = sc.transform(X_val)
             X_test = sc.transform(X_test)
             
 
@@ -273,6 +252,13 @@ if __name__ == '__main__':
             cm_info = "Confusion Matrix:\n{}".format(cm)
             logging.info(cm_info)
             print(cm_info)
+            
+            t_eng, f_eng, f_germ, t_germ = confusion_matrix(y_test,y_pred).ravel()
+            print("True English: {}".format(t_eng))
+            print("False English: {}".format(f_eng))
+            print("True German: {}".format(t_germ))
+            print("False German: {}".format(f_germ))
+
             score = classifier.evaluate(X_train,y_train,verbose=0)
             acc = "%s: %.2f%%" % (classifier.metrics_names[1], score[1]*100)
             print("Model Accuracy:")
@@ -288,11 +274,11 @@ if __name__ == '__main__':
             elapsed_time_hours = (time.time()-prog_start)/3600
             timepassed_message = 'Elapsed time in hours: {}'.format(elapsed_time_hours)
             
-
-            info_message = "\n\nFinished Training Model: {}\n{}\nPurpose: to classify data as {}\n\nData Used for Training: \nDatabase = '{}'\nTable = '{}'\nNumber of rows for training data (per dependent variable) = {}\nNumber of rows for test data (per dependent variable) = {}\nTotal number of rows used = {}   \n\nModel Specifications:\nClassifer = {}\nInput dimensions = {}\nKernel initializer = {}\nActivation (layers) = {}\nActivation (output) = {}\nNumber of units (layers) = {}\nNumber of output units = {}\nOptimizer = {}\nLoss = {}\nMetrics = {}\nNumber of layers (including input and output layers) = {}\n\n{}\n ".format(modelname,acc,var_names,database,table,variable_train_rows,variable_test_rows,tot_numrows, classifier_name,input_dim,kernel_initializer,activation_layers,activation_output,units_layers,units_output,optimizer,loss,metrics,tot_layers,timepassed_message)
+            labels_encoded = [i for i in range(len(dependent_variables))]
+            info_message = "\n\nFinished Training Model: {}\n{}\nPurpose: to classify data as {} (encoded respectively as: {})\n\nData Used for Training: \nDatabase = '{}'\nTable = '{}'\nNumber of rows for training data (per dependent variable) = {}\nNumber of rows for test data (per dependent variable) = {}\nTotal number of rows used = {}   \n\nModel Specifications:\nClassifer = {}\nInput dimensions = {}\nKernel initializer = {}\nActivation (layers) = {}\nActivation (output) = {}\nNumber of units (layers) = {}\nNumber of output units = {}\nOptimizer = {}\nLoss = {}\nMetrics = {}\nNumber of layers (including input and output layers) = {}\n\n{}\n ".format(modelname,acc,var_names,labels_encoded,database,table,variable_train_rows,variable_test_rows,tot_numrows, classifier_name,input_dim,kernel_initializer,activation_layers,activation_output,units_layers,units_output,optimizer,loss,metrics,tot_layers,timepassed_message)
             print(info_message)
             logging.info(info_message)
-            ann_viz(classifier, view=True, filename = modelname)
+            
             
         else:
             print_message = "\nRun the script after you check the global variables."

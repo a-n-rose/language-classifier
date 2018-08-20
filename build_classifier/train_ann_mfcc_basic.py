@@ -8,12 +8,10 @@ import pandas as pd
 import sqlite3
 import time
 import os
-from ann_visualizer.visualize import ann_viz
 
 import logging
 import logging.handlers
 logger = logging.getLogger(__name__)
-from pympler import tracker
 
 #import dataset
 database = 'sp_mfcc.db'
@@ -24,7 +22,7 @@ batchsize = 100
 epochs = 50
 #number of layers in NN, including input and output layers:
 tot_layers = 3
-tot_numrows = 1000
+tot_numrows = 2000000
 percentage_train = 0.8 #maintaining 80% train and 20% test
 percentage_test = 0.2
 dependent_variables = ['English','German']
@@ -34,17 +32,15 @@ noise_level = 0 #options: 0   0.25    0.5    0.75    1   1.25   None
 noise_type='matched'
 type_nn = 'ANN'
 if noise_level == None:
-    noise_level_id = 'ALL'
+    noise_level_id = '_ALL_'
 else:
-    noise_level_id = noise_level
-modelname = '{}_DB_{}_TABLE_{}_numMFCC{}_batchsize{}_epochs{}_numrows{}_{}_numlayers{}_normalizedWstdmean_noiselevel{}{}'.format(type_nn,database_name,table,num_mfcc,batchsize,epochs,tot_numrows,var_names_underscore,tot_layers,noise_level_id,noise_type)#might be overkill...
+    noise_level_id = '_{}_'.format(noise_level)
+modelname = '{}_DB_{}_TABLE_{}_numMFCC{}_batchsize{}_epochs{}_numrows{}_{}_numlayers{}_normalizedWstdmean_noiselevel{}{}'.format(type_nn,database_name,table,num_mfcc,batchsize,epochs,tot_numrows,var_names_underscore,tot_layers,noise_level_id,noise_type)
 
 
 
 if __name__ == '__main__':
     try:
-        tr_tot = tracker.SummaryTracker()
-        
         #default format: severity:logger name:message
         #documentation: https://docs.python.org/3.6/library/logging.html#logrecord-attributes 
         log_formatterstr='%(levelname)s , %(asctime)s, "%(message)s", %(name)s , %(threadName)s'

@@ -11,11 +11,12 @@ import numpy as np
 import sqlite3
 from sqlite3 import Error
 import time
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 
 database = 'sp_mfcc_test.db'
 table = 'mfcc_40'
+dependent_variables = ['English','German']
 
 
 def create_connection(db_file):
@@ -33,16 +34,16 @@ def create_cursor(conn):
     except Error as e:
         print(e)
 
-def table2dataframe(c,table,lim = None):
+def table2dataframe(c,table,var,lim = None):
     try:
         if lim:
             limit = str(lim)
-            c.execute("SELECT * FROM {} LIMIT {}".format(table,lim))
+            c.execute("SELECT * FROM {} WHERE label='{}' LIMIT {}".format(table,var,lim))
             data = c.fetchall()
             df = pd.DataFrame(data)
             return df
         else:
-            c.execute("SELECT * FROM {}".format(table))
+            c.execute("SELECT * FROM {} WHERE label='{}'".format(table,var))
             data = c.fetchall()
             df = pd.DataFrame(data)
             return df
@@ -65,19 +66,37 @@ try:
         
         #import new data
         print("collecting new data --> df")
-        df_new = table2dataframe(c,table)
+        
+        df_new = pd.DataFrame()
+        for i in range(len(dependent_variables)):
+            var = dependent_variables[i]
+            label_encoded = i
+            print(var)
+            print(label_encoded)
+            df_var = table2dataframe(c,table,var,500)
+            df_varcols = df_var.columns
+            df_var[df_varcols[-1]] = label_encoded
+            df_new = df_new.append(df_var,ignore_index=True)
 
-        X = df_new.iloc[:,:40].values
+        #based on the number of MFCCs used in training Ive seen so far:
+        if num_mfcc == 40 or num_mfcc == 20 or num_mfcc == 13:
+            a = 0
+            b = num_mfcc
+        #these leave out the first coefficient (dealing w amplitude/volume)
+        elif num_mfcc == 39 or num_mfcc==19 or num_mfcc == 12:
+            a = 1
+            b = num_mfcc+1
+        else:
+            print("No options for number of MFCCs = {}".format(num_mfcc))
+            print("Please choose from 40,39,20,19,13, or 12")
+            
+        X = df_new.iloc[:,a:b].values
         y = df_new.iloc[:,-1].values
 
         #normalize 
         mean = np.mean(X,axis=0)
         std = np.std(X,axis=0)
         X = (X-mean)/std
-
-        #make English German --> 0 and 1
-        labelencoder_y = LabelEncoder()
-        y = labelencoder_y.fit_transform(y)
 
         #feature scaling
         sc = StandardScaler()
@@ -119,4 +138,3 @@ except Exception as e:
 finally:
     if conn:
         conn.close()
-

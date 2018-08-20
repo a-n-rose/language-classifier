@@ -279,8 +279,7 @@ if __name__ == '__main__':
             print(acc)
             logging.info("Model Accuracy: {}".format(acc))
             
-            ann_viz(classifier, view=True, filename = modelname)
-            
+            print('Saving Model')
             model_json = classifier.to_json()
             with open(modelname+'.json','w') as json_file:
                 json_file.write(model_json)
@@ -293,6 +292,8 @@ if __name__ == '__main__':
             info_message = "\n\nFinished Training Model: {}\n{}\nPurpose: to classify data as {}\n\nData Used for Training: \nDatabase = '{}'\nTable = '{}'\nNumber of rows for training data (per dependent variable) = {}\nNumber of rows for test data (per dependent variable) = {}\nTotal number of rows used = {}   \n\nModel Specifications:\nClassifer = {}\nInput dimensions = {}\nKernel initializer = {}\nActivation (layers) = {}\nActivation (output) = {}\nNumber of units (layers) = {}\nNumber of output units = {}\nOptimizer = {}\nLoss = {}\nMetrics = {}\nNumber of layers (including input and output layers) = {}\n\n{}\n ".format(modelname,acc,var_names,database,table,variable_train_rows,variable_test_rows,tot_numrows, classifier_name,input_dim,kernel_initializer,activation_layers,activation_output,units_layers,units_output,optimizer,loss,metrics,tot_layers,timepassed_message)
             print(info_message)
             logging.info(info_message)
+            ann_viz(classifier, view=True, filename = modelname)
+            
         else:
             print_message = "\nRun the script after you check the global variables."
             print(print_message)

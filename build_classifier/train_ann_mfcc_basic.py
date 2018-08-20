@@ -28,7 +28,7 @@ percentage_test = 0.2
 dependent_variables = ['English','German']
 var_names = ', '.join(dependent_variables)
 var_names_underscore = '_'.join(dependent_variables)
-noise_level = 1.25 #options: 0   0.25    0.5    0.75    1   1.25   None
+noise_level = 0 #options: 0   0.25    0.5    0.75    1   1.25   None
 noise_type='matched'
 type_nn = 'ANN'
 if noise_level == None:
@@ -252,6 +252,10 @@ if __name__ == '__main__':
             print("False English: {}".format(f_eng))
             print("True German: {}".format(t_germ))
             print("False German: {}".format(f_germ))
+            print("Number Classified as English: {}".format(t_eng+f_germ))
+            print("Percentage of data classified as English: {}".format(((t_eng+f_germ)/t_eng+f_eng)*100))
+            print("Number Classified as German: {}".format(f_eng+t_germ))
+            print("Percentage of data classified as German: {}".format(((t_germ+f_eng)/t_germ+f_germ)*100))
 
             score = classifier.evaluate(X_train,y_train,verbose=0)
             acc = "%s: %.2f%%" % (classifier.metrics_names[1], score[1]*100)

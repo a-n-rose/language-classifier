@@ -114,85 +114,85 @@ if __name__ == '__main__':
         sec = 5
         if test_mic:
             print("Now recording. Please stay quiet as we measure the background noise.")
-        mictest = curr_speech.test_mic(sec)
-        if mictest == False:
-            print("We couldn't test your mic..")
-            print("Please check your settings and connections.")
-            curr_speech.cont = False
-        while curr_speech.cont == True:
-            print("For model testing purposes, which langauge do/will you speak?")
-            curr_speech.language = input()
-            curr_speech.cont = curr_speech.start_action('test me on your language')
-            if curr_speech.cont:
-                curr_speech.play_go()
-                user_speech = curr_speech.record_user(60)
-                time_str = date
-                user_recording_filename = '{}_{}.wav'.format(directory_user,time_str)
-                curr_speech.save_rec(user_recording_filename,user_speech,fs=22050)
-                #subtract noise
-                if reduce_noise(directory_user+user_recording_filename,directory_user+'background_{}.wav'.format(date)):
-                    #save speech to MFCCs 
-                    env_noise = None
-                    num_mfcc = 40
-                    wav = directory_processed_speech+'rednoise_{}.wav'.format(date)
-                    feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
-                    #prepare database to save data
+            mictest = curr_speech.test_mic(sec)
+            if mictest == False:
+                print("We couldn't test your mic..")
+                print("Please check your settings and connections.")
+                curr_speech.cont = False
+            while curr_speech.cont == True:
+                print("For model testing purposes, which langauge do/will you speak?")
+                curr_speech.language = input()
+                curr_speech.cont = curr_speech.start_action('test me on your language')
+                if curr_speech.cont:
+                    curr_speech.play_go()
+                    user_speech = curr_speech.record_user(6)
+                    time_str = date
+                    user_recording_filename = '{}talking_{}.wav'.format(directory_user,time_str)
+                    curr_speech.save_rec(user_recording_filename,user_speech,fs=22050)
+                    #subtract noise
+                    if reduce_noise(user_recording_filename,directory_user+'background_{}.wav'.format(date)):
+                        #save speech to MFCCs 
+                        env_noise = None
+                        num_mfcc = 40
+                        wav = directory_processed_speech+'rednoise_{}.wav'.format(date)
+                        feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
+                        #prepare database to save data
 
-                    columns = list((range(0,num_mfcc)))
-                    column_type = []
-                    for i in columns:
-                        column_type.append('"'+str(i)+'" REAL')
+                        columns = list((range(0,num_mfcc)))
+                        column_type = []
+                        for i in columns:
+                            column_type.append('"'+str(i)+'" REAL')
 
-                    
-                    c.execute(''' CREATE TABLE IF NOT EXISTS mfcc_40_user(%s,filename  TEXT, noisegroup TEXT, noiselevel REAL, dataset INT,label TEXT) ''' % ", ".join(column_type))
-                    conn.commit()
-                    
-                    name = Path(wav).name
-                    insert_data(name,feature,sr,noise_scale=0,dataset_group=0,label=curr_speech.language)
-                    conn.commit()
-                    
-                    #prepare data
-                    df = pd.DataFrame(feature)
-                    X = df.values
-                    
-                    #normalize
-                    mean = np.mean(X,axis=0)
-                    std = np.std(X,axis=0)
-                    X=(X-mean)/std
-                    
-                    #feature scaling
-                    sc = StandardScaler()
-                    X = sc.fit_transform(X)
-                    
-                    for model in glob.glob('./models/*.json'):
-                        model_name = os.path.splitext(model)[0]
-                        json_file = open(model_name+'.json', 'r')
-                        loaded_model_json = json_file.read()
-                        json_file.close()
-                        loaded_model = model_from_json(loaded_model_json)
-                        # load weights into new model
-                        loaded_model.load_weights(model_name+".h5")
-                        print("Loaded model from disk")
+                        
+                        c.execute(''' CREATE TABLE IF NOT EXISTS mfcc_40_user(%s,filename  TEXT, noisegroup TEXT, noiselevel REAL, dataset INT,label TEXT) ''' % ", ".join(column_type))
+                        conn.commit()
+                        
+                        name = Path(wav).name
+                        insert_data(name,feature,sr,noise_scale=0,dataset_group=0,label=curr_speech.language)
+                        conn.commit()
+                        
+                        #prepare data
+                        df = pd.DataFrame(feature)
+                        X = df.values
+                        
+                        #normalize
+                        mean = np.mean(X,axis=0)
+                        std = np.std(X,axis=0)
+                        X=(X-mean)/std
+                        
+                        #feature scaling
+                        sc = StandardScaler()
+                        X = sc.fit_transform(X)
+                        
+                        for model in glob.glob('./models/*.json'):
+                            model_name = os.path.splitext(model)[0]
+                            json_file = open(model_name+'.json', 'r')
+                            loaded_model_json = json_file.read()
+                            json_file.close()
+                            loaded_model = model_from_json(loaded_model_json)
+                            # load weights into new model
+                            loaded_model.load_weights(model_name+".h5")
+                            print("Loaded model from disk")
 
-                        # evaluate loaded model on new data
-                        try:
-                            loaded_model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-                            classify = loaded_model.predict(X)
-                            classify = (classify > 0.5)
-                            english = sum(classify == 0)
-                            german = sum(classify == 1)
-                            max_index = np.argmax([english,german])
-                            classification = max_index
-                            if classification == 0:
-                                prediction = 'English'
-                            elif classification == 1:
-                                prediction = 'German'
-                            else:
-                                print("Error ocurred - no language predicted")
-                            print("The model '{}' \n\npredicted your language to be: \n\n{}".format(model_name,prediction))
-                        except Exception as e:
-                            print(e)
-                    
+                            # evaluate loaded model on new data
+                            try:
+                                loaded_model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+                                classify = loaded_model.predict(X)
+                                classify = (classify > 0.5)
+                                english = sum(classify == 0)
+                                german = sum(classify == 1)
+                                max_index = np.argmax([english,german])
+                                classification = max_index
+                                if classification == 0:
+                                    prediction = 'English'
+                                elif classification == 1:
+                                    prediction = 'German'
+                                else:
+                                    print("Error ocurred - no language predicted")
+                                print("The model '{}' \n\npredicted your language to be: \n\n{}".format(model_name,prediction))
+                            except Exception as e:
+                                print(e)
+                        
     except Exception as e:
         print (e)
     finally:

@@ -13,7 +13,7 @@ import time
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 
-from preprocess_speech import reduce_noise, get_date
+#from preprocess_speech import reduce_noise, get_date
 from id_ur_speech_func import ID_UR_Speech
 
 
@@ -130,7 +130,7 @@ if __name__ == '__main__':
                     user_recording_filename = '{}talking_{}.wav'.format(directory_user,time_str)
                     curr_speech.save_rec(user_recording_filename,user_speech,fs=22050)
                     #subtract noise
-                    if reduce_noise(user_recording_filename,directory_user+'background_{}.wav'.format(date)):
+                    if curr_speech.reduce_noise(user_recording_filename,directory_user+'background_{}.wav'.format(date)):
                         #save speech to MFCCs 
                         env_noise = None
                         num_mfcc = 40

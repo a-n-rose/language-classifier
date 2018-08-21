@@ -86,7 +86,7 @@ def insert_data(filename,feature, sr, noise_scale,dataset_group,label):
                 col_var+=' ?,'
             else:
                 col_var+=' ?'
-        c.executemany(' INSERT INTO mfcc_40 VALUES (%s) ' % col_var,x)
+        c.executemany(' INSERT INTO mfcc_40_user VALUES (%s) ' % col_var,x)
         conn.commit()
     else:
         #logging.exception("Failed MFCC extraction: {} in the directory: {}".format(filename,label))

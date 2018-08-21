@@ -120,7 +120,8 @@ if __name__ == '__main__':
             print("Please check your settings and connections.")
             curr_speech.cont = False
         while curr_speech.cont == True:
-            curr_speech.language = input("For model testing purposes, which langauge do/will you speak?")
+            print("For model testing purposes, which langauge do/will you speak?")
+            curr_speech.language = input()
             curr_speech.cont = curr_speech.start_action('test me on your language')
             if curr_speech.cont:
                 curr_speech.play_go()

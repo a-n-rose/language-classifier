@@ -12,9 +12,11 @@ import pandas as pd
 import time
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
+import librosa
 
-#from preprocess_speech import reduce_noise, get_date
+import prep_noise as prep_data
 from id_ur_speech_func import ID_UR_Speech
+
 
 
 def get_date():
@@ -93,15 +95,13 @@ def insert_data(filename,feature, sr, noise_scale,dataset_group,label):
     return None
 
 
-
-
 if __name__ == '__main__':
     try:
         date = get_date()
         database = 'sp_mfcc_{}'.format(date)
         
         conn = sqlite3.connect(database)
-        c = conn.cursor
+        c = conn.cursor()
         noisegroup = 'none'
         curr_speech = ID_UR_Speech(date)
         directory_user = './user_recordings/'

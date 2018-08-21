@@ -147,7 +147,7 @@ def reduce_noise(wavefile,background_noise):
     y_stft, y, sr = wave2stft(wavefile)
     y_power = stft2power(y_stft)
     y_energy = get_energy(y_stft)
-    n_stft, ny, nsr = wave2stft(noise)
+    n_stft, ny, nsr = wave2stft(background_noise)
     n_power = stft2power(n_stft)
     n_energy = get_energy(n_stft)
     n_energy_mean = get_energy_mean(n_energy)
@@ -177,6 +177,6 @@ def reduce_noise(wavefile,background_noise):
     
     rednoise_samp = stft2wave(y_stftred,len(y))
     date = get_date()
-    savewave('./processed_recordings/rednoise_{}.wav'.format(date),rednoise_samp,sr)
+    savewave('./processed_recordings/rednoise_{}.wav'.format(self.date),rednoise_samp,sr)
     print('Background noise reduction complete. File saved.')
     return True

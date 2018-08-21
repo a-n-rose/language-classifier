@@ -97,6 +97,7 @@ def insert_data(filename,feature, sr, noise_scale,dataset_group,label):
 
 if __name__ == '__main__':
     try:
+        
         date = get_date()
         database = 'sp_mfcc_{}'.format(date)
         
@@ -177,6 +178,7 @@ if __name__ == '__main__':
                             print("Loaded model from disk")
 
                             # evaluate loaded model on new data
+                            print("\nYou identified your language as {}\n".format(curr_speech.language))
                             try:
                                 loaded_model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
                                 classify = loaded_model.predict(X)
@@ -191,7 +193,7 @@ if __name__ == '__main__':
                                     prediction = 'German'
                                 else:
                                     print("Error ocurred - no language predicted")
-                                print("You identified your language as {}\n".format(curr_speech.language))
+
                                 print("The model '{}' \npredicted your language to be: \n\n{}\n\n\n".format(model_name,prediction))
                             except Exception as e:
                                 print(e)
@@ -201,4 +203,4 @@ if __name__ == '__main__':
     finally:
         if conn:
             conn.close()
-                
+        curr_speech.close_game()

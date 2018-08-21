@@ -126,7 +126,7 @@ if __name__ == '__main__':
             if curr_speech.cont:
                 curr_speech.play_go()
                 user_speech = curr_speech.record_user(60)
-                time_str = curr_speech.get_date()
+                time_str = date
                 user_recording_filename = '{}_{}.wav'.format(directory_user,time_str)
                 curr_speech.save_rec(user_recording_filename,user_speech,fs=22050)
                 #subtract noise

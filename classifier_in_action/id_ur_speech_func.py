@@ -101,10 +101,11 @@ class ID_UR_Speech():
             
             
     def play_go(self):
+        pygame.init()
         topic = random.choice(["animals you think are really cool","great color combinations","badass storms you've experienced","a time someone was really nice"])
         print("Start talking for one minute after the tone. \n\nOptional topic: {}.\n\n".format(topic))
         go_wave = '231277__steel2008__race-start-ready-go.wav'
-        go_sound = pygame.mixer.Sound('./soundfiles/{}'.format(go_wave))
+        go_sound = pygame.mixer.Sound('soundfiles/{}'.format(go_wave))
         go_sound.play()
         while pygame.mixer.get_busy():
             pass

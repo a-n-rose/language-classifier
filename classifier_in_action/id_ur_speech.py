@@ -125,7 +125,7 @@ if __name__ == '__main__':
                 curr_speech.cont = curr_speech.start_action('test me on your language')
                 if curr_speech.cont:
                     curr_speech.play_go()
-                    user_speech = curr_speech.record_user(6)
+                    user_speech = curr_speech.record_user(30)
                     time_str = date
                     user_recording_filename = '{}talking_{}.wav'.format(directory_user,time_str)
                     curr_speech.save_rec(user_recording_filename,user_speech,fs=22050)
@@ -146,14 +146,16 @@ if __name__ == '__main__':
                         
                         c.execute(''' CREATE TABLE IF NOT EXISTS mfcc_40_user(%s,filename  TEXT, noisegroup TEXT, noiselevel REAL, dataset INT,label TEXT) ''' % ", ".join(column_type))
                         conn.commit()
-                        
+                        dataset_group = 0
                         name = Path(wav).name
-                        insert_data(name,feature,sr,noise_scale=0,dataset_group=0,label=curr_speech.language)
+                        insert_data(name,feature,sr,noise_scale=0,dataset_group=dataset_group,label=curr_speech.language)
                         conn.commit()
                         
                         #prepare data
-                        df = pd.DataFrame(feature)
-                        X = df.values
+                        c.execute("SELECT * FROM mfcc_40_user WHERE dataset='{}'".format(dataset_group))
+                        data = c.fetchall()
+                        df = pd.DataFrame(data)
+                        X = df.iloc[:,:40].values
                         
                         #normalize
                         mean = np.mean(X,axis=0)
@@ -189,7 +191,8 @@ if __name__ == '__main__':
                                     prediction = 'German'
                                 else:
                                     print("Error ocurred - no language predicted")
-                                print("The model '{}' \n\npredicted your language to be: \n\n{}".format(model_name,prediction))
+                                print("You identified your language as {}\n".format(curr_speech.language))
+                                print("The model '{}' \npredicted your language to be: \n\n{}\n\n\n".format(model_name,prediction))
                             except Exception as e:
                                 print(e)
                         

@@ -121,7 +121,11 @@ class ID_UR_Speech():
         '''
         close and save anything that was open during the game
         '''
-        pygame.quit()
+        try:
+            pygame.quit()
+        except Exception as e:
+            print(e)
+        return None
             
 
     def wave2stft(self,wavefile):

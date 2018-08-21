@@ -253,7 +253,7 @@ class ID_UR_Speech():
         y_stft, y, sr = self.wave2stft(wavefile)
         y_power = self.stft2power(y_stft)
         y_energy = self.get_energy(y_stft)
-        n_stft, ny, nsr = self.wave2stft(noise)
+        n_stft, ny, nsr = self.wave2stft(background_noise)
         n_power = self.stft2power(n_stft)
         n_energy = self.get_energy(n_stft)
         n_energy_mean = self.get_energy_mean(n_energy)

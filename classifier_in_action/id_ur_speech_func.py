@@ -220,7 +220,7 @@ class ID_UR_Speech():
             end = -1
         for row in range(beg,end,side):
             if rms_speech[row] > rms_mean_noise:
-                if suspended_energy(rms_speech,row,rms_mean_noise,start=start):
+                if self.suspended_energy(rms_speech,row,rms_mean_noise,start=start):
                     if start==True:
                         #to catch plosive sounds
                         while row >= 0:

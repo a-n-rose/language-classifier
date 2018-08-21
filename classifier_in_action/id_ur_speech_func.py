@@ -2,7 +2,6 @@
 import glob
 import os
 import datetime
-import matplotlib.pyplot as plt
 import random
 import numpy as np
 import sounddevice as sd

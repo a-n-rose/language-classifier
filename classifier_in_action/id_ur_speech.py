@@ -99,6 +99,9 @@ if __name__ == '__main__':
     try:
         date = get_date()
         database = 'sp_mfcc_{}'.format(date)
+        
+        conn = sqlite3.connect(database)
+        c = conn.cursor
         noisegroup = 'none'
         curr_speech = ID_UR_Speech(date)
         directory_user = './user_recordings/'
@@ -107,7 +110,7 @@ if __name__ == '__main__':
             os.makedirs(directory_user)
         if not os.path.exists(directory_processed_speech):
             os.makedirs(directory_processed_speech)
-        test_mic = curr_speech.test_mic('test your mic')
+        test_mic = curr_speech.start_action('test your mic')
         sec = 5
         if test_mic:
             print("Now recording. Please stay quiet as we measure the background noise.")
@@ -139,9 +142,6 @@ if __name__ == '__main__':
                     for i in columns:
                         column_type.append('"'+str(i)+'" REAL')
 
-                    
-                    conn = sqlite3.connect(database)
-                    c = conn.cursor
                     
                     c.execute(''' CREATE TABLE IF NOT EXISTS mfcc_40_user(%s,filename  TEXT, noisegroup TEXT, noiselevel REAL, dataset INT,label TEXT) ''' % ", ".join(column_type))
                     conn.commit()
@@ -192,9 +192,9 @@ if __name__ == '__main__':
                         except Exception as e:
                             print(e)
                     
-        except Exception as e:
-            print (e)
-        finally:
-            if conn:
-                conn.close()
+    except Exception as e:
+        print (e)
+    finally:
+        if conn:
+            conn.close()
                 

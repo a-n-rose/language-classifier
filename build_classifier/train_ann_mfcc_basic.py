@@ -13,6 +13,12 @@ import logging
 import logging.handlers
 logger = logging.getLogger(__name__)
 
+from sklearn.preprocessing import StandardScaler
+import keras
+from keras.models import Sequential
+from keras.layers import Dense
+from sklearn.metrics import confusion_matrix
+
 #import dataset
 database = 'sp_mfcc.db'
 database_name = os.path.splitext(database)[0]
@@ -22,10 +28,14 @@ batchsize = 100
 epochs = 50
 #number of layers in NN, including input and output layers:
 tot_layers = 3
-tot_numrows = 2000000
+tot_numrows = 3000000
 percentage_train = 0.8 #maintaining 80% train and 20% test
 percentage_test = 0.2
-dependent_variables = ['English','German']
+dependent_variables = ['English','German','Russian']
+if len(dependent_variables) == 2:
+    classification = 'binary'
+elif len(dependent_variables) >2:
+    classification = 'multiple'
 var_names = ', '.join(dependent_variables)
 var_names_underscore = '_'.join(dependent_variables)
 noise_level = 0 #options: 0   0.25    0.5    0.75    1   1.25   None
@@ -96,6 +106,7 @@ if __name__ == '__main__':
         print("Batchsize: {}".format(batchsize))
         print("Epochs: {}".format(epochs))
         print("Type of model: {}".format(type_nn))
+        print("Type of classification: {}".format(classification))
         
         check_variables = input("\nIMPORTANT!!!!\nAre the items listed above correct? (Y or N): ")
         if 'y' in check_variables.lower():
@@ -162,8 +173,9 @@ if __name__ == '__main__':
                     col_names = test.columns
                     test[col_names[-1]] = label_encoded
                     df_test = df_test.append(test,ignore_index=True)
-            print("Converting dataframe as matrix")
-            
+            conn.close()
+            print("Data has been extracted and database has been closed.")
+            print("Converting dataframe to matrix")
             
             #based on the number of MFCCs used in training Ive seen so far:
             if num_mfcc == 40 or num_mfcc == 20 or num_mfcc == 13:
@@ -195,17 +207,16 @@ if __name__ == '__main__':
             
             #feature scaling
             print("Scaling data")
-            from sklearn.preprocessing import StandardScaler
             sc = StandardScaler()
             X_train = sc.fit_transform(X_train)
             X_test = sc.transform(X_test)
-            
+
+            #categorical data for multiple classes:
+            if len(dependent_variables) > 2:
+                y_train = keras.utils.to_categorical(y_train, num_classes=len(dependent_variables))
+                y_test = keras.utils.to_categorical(y_test, num_classes=len(dependent_variables))     
 
             #ANN
-            import keras
-            from keras.models import Sequential
-            from keras.layers import Dense
-            
             print("Building the model..")
             #set up model variables:
             classifier = Sequential()
@@ -213,16 +224,23 @@ if __name__ == '__main__':
             input_dim = X_train.shape[1]
             kernel_initializer = 'uniform'
             activation_layers = 'relu'
-            activation_output = 'sigmoid'
-            num_labels = len(np.unique(y_train))
+            num_labels = len(dependent_variables)
             if num_labels == 2:
                 num_labels = 1
             units_layers = int((input_dim+num_labels)/2) 
             units_output = num_labels
             
+            if num_labels == 1:
+                activation_output = 'sigmoid'
+            else:
+                activation_output = 'softmax'
+            
             #optimization
             optimizer = 'adam'
-            loss = 'binary_crossentropy'
+            if num_labels == 1:
+                loss = 'binary_crossentropy'
+            else:
+                loss = 'categorical_crossentropy'
             metrics = ['accuracy']
 
             classifier.add(Dense(activation = activation_layers,units=units_layers,input_dim=input_dim,kernel_initializer=kernel_initializer))
@@ -237,26 +255,6 @@ if __name__ == '__main__':
             #numbers: batchsize and epochs
             classifier.fit(X_train,y_train,batchsize,epochs)
             
-            y_pred = classifier.predict(X_test)
-            y_pred = (y_pred > 0.5)
-            
-            from sklearn.metrics import confusion_matrix
-            y_test = y_test.astype(bool)
-            cm = confusion_matrix(y_test,y_pred)
-            cm_info = "Confusion Matrix:\n{}".format(cm)
-            logging.info(cm_info)
-            print(cm_info)
-            
-            t_eng, f_eng, f_germ, t_germ = confusion_matrix(y_test,y_pred).ravel()
-            print("True English: {}".format(t_eng))
-            print("False English: {}".format(f_eng))
-            print("True German: {}".format(t_germ))
-            print("False German: {}".format(f_germ))
-            print("Number Classified as English: {}".format(t_eng+f_germ))
-            print("Percentage of data classified as English: {}".format(((t_eng+f_germ)/t_eng+f_eng)*100))
-            print("Number Classified as German: {}".format(f_eng+t_germ))
-            print("Percentage of data classified as German: {}".format(((t_germ+f_eng)/t_germ+f_germ)*100))
-
             score = classifier.evaluate(X_train,y_train,verbose=0)
             acc = "%s: %.2f%%" % (classifier.metrics_names[1], score[1]*100)
             print("Model Accuracy:")
@@ -278,6 +276,21 @@ if __name__ == '__main__':
             logging.info(info_message)
             
             
+            #look at the confusion matrix of binary data
+            if len(dependent_variables) == 2:
+                y_pred = classifier.predict(X_test)
+                y_pred = (y_pred > 0.5)
+                y_test = y_test.astype(bool)
+                cm = confusion_matrix(y_test,y_pred)
+                cm_info = "Confusion Matrix:\n{}".format(cm)
+                logging.info(cm_info)
+                print(cm_info)
+                t_lang1, f_lang1, f_lang2, t_lang2 = confusion_matrix(y_test,y_pred).ravel()
+                print("True {}: {}".format(dependent_variables[0],t_lang1))
+                print("False {}: {}".format(dependent_variables[0], f_lang1))
+                print("True {}: {}".format(dependent_variables[1], t_lang2))
+                print("False {}: {}".format(dependent_variables[1], f_lang2))
+
         else:
             print_message = "\nRun the script after you check the global variables."
             print(print_message)
@@ -291,4 +304,5 @@ if __name__ == '__main__':
     finally:
         if conn:
             conn.close()
+            print("Database closed")
 

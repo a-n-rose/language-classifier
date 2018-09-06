@@ -16,6 +16,12 @@ Note: there are several folders with speech data: the above folder is "48kHz_16b
 Download German speech from: http://www.voxforge.org/home/forums/other-languages/german/open-speech-data-corpus-for-german
 This has been structured so that if the zipfile is extracted, tons of memory will be used up. Unzip file somewhere with sufficient memory. I think it needs a total of 20GiB.
 
+* Russian:
+Same as English
+```
+$ wget -r -A.tgz http://www.repository.voxforge1.org/downloads/Russian/Trunk/Audio/Original/48kHz_16bit/
+```
+
 2) Structure the speech files so that in your cwd all the English (or whatever language files) are located in a subdirectory called 'English' and German files in a 'German' subdirectory. The name of each subdirectory will be used as the categorical label for the speech files within them. (It doesn't matter if the wave/zip files are in additional subdirectories within the language (i.e. 'English', 'German') folder, just as long as they are within their corresponding language directory.)
 
 Note: when extracting MFCCs, this script expects a one-to-one ratio of speaker and wavefile/tgzfile. It assigns each wavefile and tgzfile to either the train, validate, or test data sets. This is to avoid mixing a speaker's data between groups. While this might not work 100%, it would at least help avoiding too much mixing (something I plan on comparing down-the-line). If this doesn't work with your data, ignore the column 'dataset'. Another way you could create train, validate, and test datasets is to create them as subdirectories of the cwd (i.e. 'English_train', 'English_test') and place the corresponding audio files into those subdirectories. 
@@ -74,12 +80,11 @@ To deactivate the environment:
 
 ## ToDo
 * Set up batch training 
-* Compare different MFCCs' inclusion in training (taking away 1st coefficient, using the first 13, using 2-13, using 1-20, etc.)
 * Apply random noises to MFCC data (something like <a href="http://dcase.community/challenge2018/task-general-purpose-audio-tagging">this</a>?)
-* Compare how well noise conditions do: no noise, matched background, and random
-* Download additional languages and add to training data
-* Develop app to apply model to a new user's speech
 * Train other neural nets with data, i.e. CNN 
+* Compare MFCC vs raw form vs logmelspectrum vs combination of these as training data
+* Apply Keras TimeDistributed module to look at MFCC patterns over time.
+* Compare Delta-Delta / differential and acceleration coefficients and Keras TimeDistributed module 
 
 ## License
 

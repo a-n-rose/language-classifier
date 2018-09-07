@@ -340,10 +340,8 @@ if __name__ == '__main__':
             print(print_message)
             logging.info(print_message)
     except sqlite3.Error as e:
-        print("Database error {}".format(e))
         logging.exception("Database error: %s" % e)
     except Exception as e:
-        print("Error occurred: {}".format(e))
         logging.exception("Error occurred: %s" % e)
     finally:
         if conn:

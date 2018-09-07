@@ -135,7 +135,10 @@ def insert_data(filename,feature, sr, noise_scale,dataset_group,label):
 if __name__ == '__main__':
     try:
         tr_tot = tracker.SummaryTracker()
-    
+        start_logging(script_purpose)
+        logging.info("Running script: {}".format(current_filename))
+        logging.info("Session: {}".format(session_name))
+        
         #initialize database
         conn = sqlite3.connect(database)
         c = conn.cursor()

@@ -84,7 +84,8 @@ To deactivate the environment:
 * Train other neural nets with data, i.e. CNN 
 * Compare MFCC vs raw form vs logmelspectrum vs combination of these as training data
 * Apply Keras TimeDistributed module to look at MFCC patterns over time.
-* Compare Delta-Delta / differential and acceleration coefficients and Keras TimeDistributed module 
+* Compare Delta-Delta / differential and acceleration coefficients and Keras TimeDistributed module.
+* Apply Voice Activy Detector to remove silences from speech.
 
 ## License
 

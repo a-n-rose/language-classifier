@@ -25,12 +25,18 @@ from sqlite3 import Error
 from pathlib import Path
 import time
 import random
-import logging
-import logging.handlers
+
+import prep_noise as prep_data
+
+
+from my_logger import start_logging, get_date
 logger = logging.getLogger(__name__)
 from pympler import tracker
 
-import prep_noise as prep_data
+#for logging:
+script_purpose = 'MFCC_extraction_' #will name logfile 
+current_filename = os.path.basename(__file__)
+session_name = get_date() #make sure this session has a unique identifier - link to model name and logging information
 
 
 
@@ -124,44 +130,7 @@ def insert_data(filename,feature, sr, noise_scale,dataset_group,label):
 if __name__ == '__main__':
     try:
         tr_tot = tracker.SummaryTracker()
-        
-        #default format: severity:logger name:message
-        #documentation: https://docs.python.org/3.6/library/logging.html#logrecord-attributes 
-        log_formatterstr='%(levelname)s , %(asctime)s, "%(message)s", %(name)s , %(threadName)s'
-        log_formatter = logging.Formatter(log_formatterstr)
-        logging.root.setLevel(logging.DEBUG)
-        #logging.basicConfig(format=log_formatterstr,
-        #                    filename='/tmp/tradinglog.csv',
-        #                    level=logging.INFO)
-        #for logging infos:
-        file_handler_info = logging.handlers.RotatingFileHandler('mfccloginfo.csv',
-                                                                  mode='a',
-                                                                  maxBytes=1.0 * 1e6,
-                                                                  backupCount=200)
-        #file_handler_debug = logging.FileHandler('/tmp/tradinglogdbugger.csv', mode='w')
-        file_handler_info.setFormatter(log_formatter)
-        file_handler_info.setLevel(logging.INFO)
-        logging.root.addHandler(file_handler_info)
-        
-        
-        #https://docs.python.org/3/library/logging.handlers.html
-        #for logging errors:
-        file_handler_error = logging.handlers.RotatingFileHandler('mfcclogerror.csv', mode='a',
-                                                                  maxBytes=1.0 * 1e6,
-                                                                  backupCount=200)
-        file_handler_error.setFormatter(log_formatter)
-        file_handler_error.setLevel(logging.ERROR)
-        logging.root.addHandler(file_handler_error)
-        
-        #for logging infos:
-        file_handler_debug = logging.handlers.RotatingFileHandler('mfcclogdbugger.csv',
-                                                                  mode='a',
-                                                                  maxBytes=2.0 * 1e6,
-                                                                  backupCount=200)
-        #file_handler_debug = logging.FileHandler('/tmp/tradinglogdbugger.csv', mode='w')
-        file_handler_debug.setFormatter(log_formatter)
-        file_handler_debug.setLevel(logging.DEBUG)
-        logging.root.addHandler(file_handler_debug)
+    
 
         #initialize database
         conn = sqlite3.connect(database)

@@ -25,23 +25,34 @@ from sqlite3 import Error
 from pathlib import Path
 import time
 import random
-import logging
-import logging.handlers
+
+
+from my_logger import start_logging, get_date
 logger = logging.getLogger(__name__)
 from pympler import tracker
 
+
 import prep_noise as prep_data
 
+#for logging:
+script_purpose = 'MFCC_extraction_' #will name logfile 
+current_filename = os.path.basename(__file__)
+session_name = get_date() #make sure this session has a unique identifier - link to model name and logging information
 
 
 #global variables
-database = 'sp_mfcc_test.db'
-noisegroup = 'none' # Options: 'matched' 'none' 'random'
+database = 'sp_mfcc_newspeech.db'
+noisegroup = 'with noise reduction' # Options: 'matched' 'none' 'random'
 #if no noise, environment_noise = None; otherwise, put name of wavefile here
 environment_noise = None #Options: None or wavefile i.e. 'background_noise.wav'  
 #specify number of mfccs --> reflects the number of columns
 #this needs to match the others in the database, therefore should be changed with caution
 num_mfcc = 40
+dataset_group=0 #other option: None
+if dataset_group==0:
+    dataset_name = 'used to test trained models'.upper()
+else:
+    dataset_name = 'divided between train, validation, and test groups'.upper()
 
 
 #'.' below means current directory
@@ -102,7 +113,7 @@ def insert_data(filename,feature, sr, noise_scale,dataset_group,label):
         curr_df["dataset"] = dataset_group
         curr_df["label"] = label
         
-        x = curr_df.as_matrix()
+        x = curr_df.values
         num_cols = num_mfcc + len(['filename','noisegroup','noiselevel','dataset','label'])
         col_var = ""
         for i in range(num_cols):
@@ -124,51 +135,14 @@ def insert_data(filename,feature, sr, noise_scale,dataset_group,label):
 if __name__ == '__main__':
     try:
         tr_tot = tracker.SummaryTracker()
-        
-        #default format: severity:logger name:message
-        #documentation: https://docs.python.org/3.6/library/logging.html#logrecord-attributes 
-        log_formatterstr='%(levelname)s , %(asctime)s, "%(message)s", %(name)s , %(threadName)s'
-        log_formatter = logging.Formatter(log_formatterstr)
-        logging.root.setLevel(logging.DEBUG)
-        #logging.basicConfig(format=log_formatterstr,
-        #                    filename='/tmp/tradinglog.csv',
-        #                    level=logging.INFO)
-        #for logging infos:
-        file_handler_info = logging.handlers.RotatingFileHandler('mfccloginfo.csv',
-                                                                  mode='a',
-                                                                  maxBytes=1.0 * 1e6,
-                                                                  backupCount=200)
-        #file_handler_debug = logging.FileHandler('/tmp/tradinglogdbugger.csv', mode='w')
-        file_handler_info.setFormatter(log_formatter)
-        file_handler_info.setLevel(logging.INFO)
-        logging.root.addHandler(file_handler_info)
-        
-        
-        #https://docs.python.org/3/library/logging.handlers.html
-        #for logging errors:
-        file_handler_error = logging.handlers.RotatingFileHandler('mfcclogerror.csv', mode='a',
-                                                                  maxBytes=1.0 * 1e6,
-                                                                  backupCount=200)
-        file_handler_error.setFormatter(log_formatter)
-        file_handler_error.setLevel(logging.ERROR)
-        logging.root.addHandler(file_handler_error)
-        
-        #for logging infos:
-        file_handler_debug = logging.handlers.RotatingFileHandler('mfcclogdbugger.csv',
-                                                                  mode='a',
-                                                                  maxBytes=2.0 * 1e6,
-                                                                  backupCount=200)
-        #file_handler_debug = logging.FileHandler('/tmp/tradinglogdbugger.csv', mode='w')
-        file_handler_debug.setFormatter(log_formatter)
-        file_handler_debug.setLevel(logging.DEBUG)
-        logging.root.addHandler(file_handler_debug)
-
+    
         #initialize database
         conn = sqlite3.connect(database)
         c = conn.cursor()
         
         print("Database will be saved as: {}".format(database))
         print("Noisegroup of collected MFCCs: {}".format(noisegroup))
+        print("Speech data will be {}".format(dataset_name))
         print("Noise wavefile: {}".format(environment_noise))
         print("Number of MFCCs to be extracted: {}".format(num_mfcc))
         
@@ -199,7 +173,7 @@ if __name__ == '__main__':
                 
             #collect directory names:
             dir_list = []
-            for label in glob.glob('*/'):
+            for label in glob.glob('./speech_input/*/'):
                 dir_list.append(label)
             if len(dir_list) > 0:
                 print("The directories found include: ", dir_list)
@@ -209,7 +183,7 @@ if __name__ == '__main__':
             for j in range(len(dir_list)):
                 directory = dir_list[j]
                 os.chdir(directory)
-                label = directory[:-1]
+                label = Path(directory).name
                 print("Now processing the directory: "+label)
                 
                 #check for all wave files in each subdirectory:
@@ -220,7 +194,8 @@ if __name__ == '__main__':
                     for v in range(len(wavefiles)):
                         #assigns wavefile to train, validate, or train dataset (1,2,3 respectively)
                         #does expect each speaker to have only 1 wavefile
-                        dataset_group = random.choice([1,1,1,1,1,1,1,2,2,2,3,3,3])
+                        if dataset_group != 0:
+                            dataset_group = random.choice([1,1,1,1,1,1,1,2,2,2,3,3,3])
                         wav = wavefiles[v]
                         feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
                         filename = Path(wav).name
@@ -251,7 +226,8 @@ if __name__ == '__main__':
                     for t in range(len(tgz_list)):
                         #assigns zipfile to train, validate, or train dataset (1,2,3 respectively)
                         #does expect each speaker to have only 1 zipfile/an entire zipfile to be dedicated to only 1 speaker
-                        dataset_group = random.choice([1,1,1,1,1,1,1,2,2,2,3,3,3])
+                        if dataset_group != 0:
+                            dataset_group = random.choice([1,1,1,1,1,1,1,2,2,2,3,3,3])
                         extract(tgz_list[t], extract_path = '/tmp/audio')
                         filename = os.path.splitext(tgz_list[t])[0]
                         waves_list = []
@@ -288,7 +264,7 @@ if __name__ == '__main__':
                     logging.info(print_message)
                 
                 print("\nFinished processing directory {}\n".format(label))
-                os.chdir("..")
+                os.chdir("../..")
                     
             conn.commit()
             print_message = '\nData has been committed to database'

@@ -9,16 +9,14 @@ import sqlite3
 import time
 import os
 
-import logging
-import logging.handlers
-logger = logging.getLogger(__name__)
-
 from sklearn.preprocessing import StandardScaler
 import keras
 from keras.models import Sequential
 from keras.layers import Dense, LSTM, Flatten
 from sklearn.metrics import confusion_matrix
 
+from my_logger import start_logging, get_date
+logger = logging.getLogger(__name__)
 
 def reshape_data_3d(df,start_col, end_col,num_sequences):
     '''
@@ -42,9 +40,18 @@ def reshape_data_3d(df,start_col, end_col,num_sequences):
     X3d = Xy[:,:-1]
     y3d = Xy[:,-1]
     return X3d, y3d
-            
-            
-#import dataset
+
+
+
+
+#for logging:
+script_purpose = 'trainLanguageClassifer' #will name logfile 
+current_filename = os.path.basename(__file__)
+session_name = get_date() #make sure this session has a unique identifier - link to model name and logging information
+
+       
+       
+#important variables to set:
 database = 'sp_mfcc.db'
 database_name = os.path.splitext(database)[0]
 table = 'mfcc_40'
@@ -75,54 +82,18 @@ modelname = '{}_DB_{}_TABLE_{}_numMFCC{}_batchsize{}_epochs{}_numrows{}_{}_numla
 
 
 
+
 if __name__ == '__main__':
     try:
-        #default format: severity:logger name:message
-        #documentation: https://docs.python.org/3.6/library/logging.html#logrecord-attributes 
-        log_formatterstr='%(levelname)s , %(asctime)s, "%(message)s", %(name)s , %(threadName)s'
-        log_formatter = logging.Formatter(log_formatterstr)
-        logging.root.setLevel(logging.DEBUG)
-        #logging.basicConfig(format=log_formatterstr,
-        #                    filename='/tmp/tradinglog.csv',
-        #                    level=logging.INFO)
-        #for logging infos:
-        file_handler_info = logging.handlers.RotatingFileHandler('trainANN_loginfo.csv',
-                                                                  mode='a',
-                                                                  maxBytes=1.0 * 1e6,
-                                                                  backupCount=200)
-        #file_handler_debug = logging.FileHandler('/tmp/tradinglogdbugger.csv', mode='w')
-        file_handler_info.setFormatter(log_formatter)
-        file_handler_info.setLevel(logging.INFO)
-        logging.root.addHandler(file_handler_info)
-        
-        
-        #https://docs.python.org/3/library/logging.handlers.html
-        #for logging errors:
-        file_handler_error = logging.handlers.RotatingFileHandler('trainANN_logerror.csv', mode='a',
-                                                                  maxBytes=1.0 * 1e6,
-                                                                  backupCount=200)
-        file_handler_error.setFormatter(log_formatter)
-        file_handler_error.setLevel(logging.ERROR)
-        logging.root.addHandler(file_handler_error)
-        
-        #for logging infos:
-        file_handler_debug = logging.handlers.RotatingFileHandler('trainANN_logdbugger.csv',
-                                                                  mode='a',
-                                                                  maxBytes=2.0 * 1e6,
-                                                                  backupCount=200)
-        #file_handler_debug = logging.FileHandler('/tmp/tradinglogdbugger.csv', mode='w')
-        file_handler_debug.setFormatter(log_formatter)
-        file_handler_debug.setLevel(logging.DEBUG)
-        logging.root.addHandler(file_handler_debug)
-
-        
-        
+        start_logging(script_purpose)
+        logging.info("Running script: {}".format(current_filename))
+        logging.info("Session: {}".format(session_name))
         
         #initialize database
         conn = sqlite3.connect(database)
         c = conn.cursor()
         
-        
+        #VERIFY VARIABLES:
         print("\n\nLoading data from \nDATABASE: '{}'\nTABLE: '{}'\n".format(database,table))
         print("Dependent variables are: {}".format(var_names))
         print("Number of MFCCs used: {}".format(num_mfcc))

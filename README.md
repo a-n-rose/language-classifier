@@ -68,9 +68,9 @@ After checking the global variables, run speech2mfcc_w_wo_noise_wav_tgz.py in cw
 ```
 I ran this script with the '48kHz_16bit' folder from the English dataset in a 'English' subdirectory and the 'train' folder from the German dataset in a 'German'subdirectory. It took this script appx. 16 hours to extract the MFCCs from these audio files.
 
-After checking the global variables, run train_ann_mfcc_basic.py in cwd where mfcc database is located
+After checking the global variables, run train_lstm_ann_languageclassifier_simple.py in cwd where mfcc database is located:
 ```
-(env)...$ python3 train_ann_mfcc_basic.py
+(env)...$ python3 train_lstm_ann_languageclassifier_simple.py
 ```
 
 To deactivate the environment:

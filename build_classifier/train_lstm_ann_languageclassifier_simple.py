@@ -20,44 +20,30 @@ from keras.layers import Dense, LSTM, Flatten
 from sklearn.metrics import confusion_matrix
 
 
-def reshape_data_3d(dependent_variables_list,df,start_col, end_col,num_sequences,num_mfcc):
+def reshape_data_3d(df,start_col, end_col,num_sequences):
     '''
     Expects the last column of dataframe to contain label data
     and that the labels correspond to their indices in the 'dependent variables' list
     '''
-    X_reshape = False
-    for label in range(len(dependent_variables_list)):
-        label_col = df.columns[-1]
-        #separate values based on label
-        df_sep = df[df[label_col]==label]
-        #put dataframe values into matrix
-        X_temp = df_sep.iloc[:,start_col:end_col].values
-        y_temp = df_sep.iloc[:,-1].values
-        num_samp = X_temp.shape[0]
-        #make sure number of samples can be evenly divided by number of sequences:
-        #necessary to reshape data
-        if num_samp % num_sequences != 0:
-            num_samp -= (num_samp % num_sequences)
-            X_temp = X_temp[:num_samp,:]
-            y_temp = y_temp[:num_samp]
-        #new number of samples after consideration of sequences
-        new_samp = int(num_samp/num_sequences)
-        #reshape data
-        #(samples, number_seqeunces, number_features)
-        X_3d = X_temp.reshape((new_samp,num_sequences,num_mfcc))
-        y_3d = y_temp[:new_samp]
-        
-        if X_reshape is False:
-            X = X_3d
-            y = y_3d
-            X_reshape = True
-        else:
-            X = np.concatenate((X,X_3d),axis=0)
-            y = np.concatenate((y,y_3d),axis=0)
-    return X, y
+    label_col = df.columns[-1]
+    #separate values based on label
+    cols = list(range(start_col,end_col))
+    label_col = df.columns[-1]
+    cols.append(label_col)
+    df = df[cols]
+    Xy = df.values
+    samps = Xy.shape[0]
+    if samps % num_sequences != 0:
+        samps - samps % num_sequences
+        Xy = Xy[:samps,:]
+    new_samps = int(samps/num_sequences)
+    #capture number of features in the start and end column numbers
+    Xy3d = Xy.reshape(new_samps,num_sequences,int(end_col-start_col)+1)
+    X3d = Xy[:,:-1]
+    y3d = Xy[:,-1]
+    return X3d, y3d
             
-
-
+            
 #import dataset
 database = 'sp_mfcc.db'
 database_name = os.path.splitext(database)[0]
@@ -236,8 +222,8 @@ if __name__ == '__main__':
 
             #Reshape data for LSTM
             if type_nn == 'LSTM':
-                X_train, y_train = reshape_data_3d(dependent_variables,df_train,a,b,num_sequences,num_mfcc)
-                X_test, y_test = reshape_data_3d(dependent_variables,df_test,a,b,num_sequences,num_mfcc)
+                X_train, y_train = reshape_data_3d(df_train,a,b,num_sequences)
+                X_test, y_test = reshape_data_3d(df_test,a,b,num_sequences)
                         
             #if not LSTM, no reshaping of data is necessary
             else:

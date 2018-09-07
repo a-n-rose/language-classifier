@@ -1,5 +1,5 @@
 # Language Classifier
-A language classifier model built via deep learning techniques. Currently, the classifer is an ANN. Future classifiers will include CNN, among others.
+A language classifier model built via deep learning techniques. Currently I have trained a simple artificial neural network (ANN) and a long short term memory (LSTM) recurrent neural network (RNN). For reference, <a href="https://a-n-rose.github.io/2018/08/22/language-classifier.html">here</a> is my blogpost documenting the development of the ANN classifier and <a href="https://a-n-rose.github.io/2018/09/07/language-classifier-LSTM.html">here</a> is one on the LSTM.
 
 ## Getting Started
 

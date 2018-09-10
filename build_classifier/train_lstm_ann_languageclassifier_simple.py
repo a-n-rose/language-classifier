@@ -15,8 +15,12 @@ from keras.models import Sequential
 from keras.layers import Dense, LSTM, Flatten
 from sklearn.metrics import confusion_matrix
 
+import logging.handlers
 from my_logger import start_logging, get_date
-logger = logging.getLogger(__name__)
+#for logging:
+script_purpose = 'trainLanguageClassifer' #will name logfile 
+current_filename = os.path.basename(__file__)
+session_name = get_date() #make sure this session has a unique identifier - link to model name and logging information
 
 def reshape_data_3d(df,start_col, end_col,num_sequences):
     '''
@@ -41,13 +45,6 @@ def reshape_data_3d(df,start_col, end_col,num_sequences):
     y3d = Xy[:,-1]
     return X3d, y3d
 
-
-
-
-#for logging:
-script_purpose = 'trainLanguageClassifer' #will name logfile 
-current_filename = os.path.basename(__file__)
-session_name = get_date() #make sure this session has a unique identifier - link to model name and logging information
 
        
        

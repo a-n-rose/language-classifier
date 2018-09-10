@@ -28,11 +28,10 @@ import random
 
 import prep_noise as prep_data
 
-
-from my_logger import start_logging, get_date
-logger = logging.getLogger(__name__)
 from pympler import tracker
 
+import logging.handlers
+from my_logger import start_logging, get_date
 #for logging:
 script_purpose = 'MFCC_extraction_' #will name logfile 
 current_filename = os.path.basename(__file__)
@@ -130,7 +129,9 @@ def insert_data(filename,feature, sr, noise_scale,dataset_group,label):
 if __name__ == '__main__':
     try:
         tr_tot = tracker.SummaryTracker()
-    
+        start_logging(script_purpose)
+        prog_start = time.time()
+        logging.info(prog_start)
 
         #initialize database
         conn = sqlite3.connect(database)
@@ -144,8 +145,7 @@ if __name__ == '__main__':
         check_variables = input("\nIMPORTANT!!!!\nAre the items listed above correct? (Y or N): ")
         if 'y' in check_variables.lower():
 
-            prog_start = time.time()
-            logging.info(prog_start)
+
             #load environment noise to be added to training data
             if environment_noise: 
                 try:

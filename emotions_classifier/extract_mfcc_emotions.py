@@ -59,6 +59,8 @@ def parser(wavefile,num_mfcc,env_noise=None):
     try:
         y, sr = librosa.load(wavefile, res_type= 'kaiser_fast')
         y = prep_data.normalize(y)
+        #remove the silence at beginning and end of recording
+        y = prep_data.get_speech_samples(y,sr)
         
         rand_scale = 0.0
         #randomly assigns speaker data to 1 (train) 2 (validation) or 3 (test)

@@ -1,6 +1,6 @@
 ## Voice Activity Detection Scripts
 
-These scripts allow you to check for voice activity. You should also be able to plot (by saving the plot as .png) the signal, energy, and power of an audio signal, both of the original signal and also of the signal with silences removed. 
+These scripts allow you to check for voice activity. You should also be able to plot (by saving the plot as .png) the signal, energy, and power of an audio signal, both of the original signal and also of the signal with silences removed. To see my blog on this, click <a href="https://a-n-rose.github.io/2018/09/06/updating-VAD.html">here</a>.
 
 As of now, this script provides a simple VAD and does not remove silences throughout a recording, just the beginning and ending silences. **Speech (or sound in general) is detected if the energy level of a sample is greater than the mean energy of the signal, for a consecutive three samples.**
 

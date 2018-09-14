@@ -38,7 +38,7 @@ from pympler import tracker
 import logging.handlers
 from my_logger import start_logging, get_date
 #for logging:
-script_purpose = 'MFCC_extraction_emotion' #will name logfile 
+script_purpose = 'MFCC_extraction_emotion_VAD' #will name logfile 
 current_filename = os.path.basename(__file__)
 session_name = get_date() #make sure this session has a unique identifier - link to model name and logging information
 
@@ -46,7 +46,7 @@ session_name = get_date() #make sure this session has a unique identifier - link
 
 
 #global variables
-database = 'sp_mfcc_emotions.db'
+database = 'sp_mfcc_emotions_VAD.db'
 noisegroup = 'none' # Options: 'matched' 'none' 'random'
 #if no noise, environment_noise = None; otherwise, put name of wavefile here
 environment_noise = None #Options: None or wavefile i.e. 'background_noise.wav'  

@@ -63,12 +63,17 @@ def get_energy_mean(rms_energy):
 
   
 def suspended_energy(speech_energy,speech_energy_mean,row,start):
-    if start == True:
-        if speech_energy[row+1] and speech_energy[row+2] and speech_energy[row+3] > speech_energy_mean:
-            return True
-    else:
-        if speech_energy[row-1] and speech_energy[row-2] and speech_energy[row-3] > speech_energy_mean:
-            return True
+    try:
+        if start == True:
+            if row <= len(speech_energy)-4:
+                if speech_energy[row+1] and speech_energy[row+2] and speech_energy[row+3] > speech_energy_mean:
+                    return True
+        else:
+            if row >= 3:
+                if speech_energy[row-1] and speech_energy[row-2] and speech_energy[row-3] > speech_energy_mean:
+                    return True
+    except IndexError as ie:
+        return False
 
 def sound_index(speech_energy,speech_energy_mean,start = True):
     if start == True:

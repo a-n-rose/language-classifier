@@ -4,7 +4,11 @@ These scripts allow you to check for voice activity. You should also be able to 
 
 As of now, this script provides a simple VAD and does not remove silences throughout a recording, just the beginning and ending silences. **Speech (or sound in general) is detected if the energy level of a sample is greater than the mean energy of the signal, for a consecutive three samples.**
 
-The audio signal is plotted by loading the wav via librosa, and plotting the sample values. The energy values were calculated by getting the stft of the audio samples and taking the absolute value. Those values were used for plotting the energy. Finally, power was calculated by squaring the energy values. As you can guess, those values were used for plotting the power. Note: power was not used in detecting speech; it's just there if you want to plot it.
+The audio signal is plotted by loading the wav via librosa, and plotting the sample values. Power was calculated by first taking the absolute values of the stft, then squaring them. Those values were used for plotting the power. The energy values were calculated by taking the square root of the mean of power values:
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=energy&space;=&space;\sqrt(\sum(power_i)/&space;P)" target="_blank"><img src="https://latex.codecogs.com/gif.latex?energy&space;=&space;\sqrt(\sum(power_i)/&space;P)" title="energy = \sqrt(\sum(power_i)/ P)" /></a>
+
+Those values were used for plotting the energy. 
 
 ### Getting Started
 Simply indicate the path to the wavefile you want to examine/apply speech detection to in the script 'remove_silence.py'

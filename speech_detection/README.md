@@ -7,6 +7,7 @@ As of now, this script provides a simple VAD and does not remove silences throug
 The audio signal is plotted by loading the wav via librosa, and plotting the sample values. Power was calculated by first taking the absolute values of the stft, then squaring them. Those values were used for plotting the power. The energy values were calculated by taking the square root of the mean of power values:
 
 <a href="https://www.codecogs.com/eqnedit.php?latex=energy&space;=&space;\sqrt(\sum(power_i)/&space;P)" target="_blank"><img src="https://latex.codecogs.com/gif.latex?energy&space;=&space;\sqrt(\sum(power_i)/&space;P)" title="energy = \sqrt(\sum(power_i)/ P)" /></a>
+###### The P stands for the total number of power values of that row (to get the average, one divides the sum of values by the total number of values)
 
 Those values were used for plotting the energy. 
 

@@ -8,3 +8,14 @@ env/
 *.directory
 *__pycache__/
 *.tgz
+models/
+old/
+graphs/
+models_old/
+test_classifier/
+English/
+German
+visualizations_old/
+recordings/
+data/
+visualize_mfcc/

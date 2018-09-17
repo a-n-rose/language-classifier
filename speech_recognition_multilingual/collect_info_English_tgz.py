@@ -50,12 +50,8 @@ if __name__ == '__main__':
             tgz_list = collect_tgzfiles()
         
             #collect annotations and save to database
-            try:
-                collected = tgz_2_annotations(tgz_list,c,conn,tablename)
-            except Error as e:
-                logging.error("Database error occurred: {}".format(e))
-            except Exception as e:
-                logging.error("Error occurred: {}".format(e))
+            collected = tgz_2_annotations(tgz_list,c,conn,tablename)
+            
             if collected:
                 print("Annotations have been collected.")
         else:

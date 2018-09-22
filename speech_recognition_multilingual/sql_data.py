@@ -3,10 +3,11 @@ import numpy as np
 import pandas as pd
 
 class Error(Exception):
+    """Base class for other exceptions"""
     pass
 
 class LimitMissingError(Error):
-   """Base class for other exceptions"""
+   """If rowstart is specified but limit is not"""
    pass
 
 

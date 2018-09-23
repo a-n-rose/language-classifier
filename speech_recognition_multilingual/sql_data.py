@@ -1,6 +1,8 @@
 import os
 import numpy as np
 import pandas as pd
+import sqlite3
+from sqlite3 import Error
 
 class Error(Exception):
     """Base class for other exceptions"""
@@ -10,9 +12,14 @@ class LimitMissingError(Error):
    """If rowstart is specified but limit is not"""
    pass
 
+class Connect_db:
+    def __init__(self,database,tablename):
+        self.database = database
+        self.table = tablename
+        self.conn = sqlite3.connect(database)
+        self.c = self.conn.cursor()
 
-def sqldata2df(c,tablename,column_value_list=None,limit=None,row_start=None):
-    try:
+    def sqldata2df(self,column_value_list=None,limit=None,row_start=None):
         col_val = []
         if column_value_list:
             extra = " WHERE"
@@ -32,13 +39,11 @@ def sqldata2df(c,tablename,column_value_list=None,limit=None,row_start=None):
             else:
                 col_val.append(" LIMIT %s" % (limit))
         elif row_start:
-            raise LimitMissingError
+            raise LimitMissingError("\nLimitMissingError: Need a LIMIT value in order to specify a ROWSTART value.\n")
             
-        msg = ''' SELECT * FROM {}{} %s'''.format(tablename,extra) % (" AND ".join(col_val))
+        msg = ''' SELECT * FROM {}{} %s'''.format(self.table,extra) % (" AND ".join(col_val))
         print(msg)
-        c.execute(msg)
-        data = c.fetchall()
+        self.c.execute(msg)
+        data = self.c.fetchall()
         df = pd.DataFrame(data)
         return df
-    except LimitMissingError:
-        print("\nLimitMissingError: Need a LIMIT value in order to specify a ROWSTART value.\n")

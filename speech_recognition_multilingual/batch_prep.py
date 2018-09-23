@@ -62,7 +62,6 @@ class Batch_Data:
         
         #num batches = num_ipa - 2
         total_batches = num_ipa - (ipa_window - 1)
-        
         #create skeleton for where batches will be collected
         batch = np.zeros(shape=(total_batches,batch_size,num_features))
         
@@ -70,11 +69,11 @@ class Batch_Data:
             start = batch_iter * (num_mfcc_per_ipa * ipa_shift) #shifting at indicated shift length (e.g. if ipa_shift = 1, then shift 1 letter at a time)
             end = start + batch_mfcc #window of 3 letters
             assert end < len(mfcc) 
-            batch[batch_iter]=(mfcc[start:end,:])
+            batch[batch_iter]=mfcc[start:end,:]
         
         if data_index < len(ipa):
             self.data_index += 1
         else:
             self.data_index = None
             print("Through all of IPA data")
-        return batch
+        return batch, annotation_ipa

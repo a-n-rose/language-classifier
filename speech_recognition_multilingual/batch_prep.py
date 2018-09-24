@@ -18,8 +18,14 @@ class Batch_Data:
         self.mfcc = data_mfcc
         self.data_index = 0
 
-    def remove_spaces(self,string):
-        newstring = string.replace(" ","")
+    def remove_spaces_endofline(self,list_or_string):
+        if isinstance(list_or_string,str):
+            newstring = list_or_string.replace(" ","")
+            newstring = newstring.replace("\n","")
+        elif isinstance(list_or_string,list):
+            newstring = list_or_string.copy()
+            newstring.remove(" ")
+            newstring.remove("\n")
         return newstring
 
     def get_tgz_name(self,path,wav):
@@ -54,6 +60,7 @@ class Batch_Data:
                         pass
                     else:
                         ipa_chars.append(char)
+            ipa_chars = self.remove_spaces_endofline(ipa_chars)
             self.build_ipa_dict(ipa_chars)
             self.get_num_classes(ipa_chars,ipa_window)
             end = time.time()
@@ -81,7 +88,7 @@ class Batch_Data:
         ipa = self.ipa[data_index]
         recording_session = ipa[0]
         wavefile = ipa[1]
-        annotation_ipa = self.remove_spaces(ipa[3])
+        annotation_ipa = self.remove_spaces_endofline(ipa[3])
         num_ipa = len(annotation_ipa)
         mfcc_id = self.get_tgz_name(recording_session,wavefile)
         

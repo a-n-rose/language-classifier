@@ -39,8 +39,9 @@ for i in range(total_batches):
     for x in ipa_vals:
         print(x, list(batch_prep.dict_ipa.keys())[list(batch_prep.dict_ipa.values()).index(x)])
 
-        
 
 '''
 Next step is to form X and y data, after one-hot-encoding the y data with keras.utils.to_categorical(y, num_classes = batch_prep.num_classes).
+
+Question I have: would it make a difference if ipa stress markers were included? 
 '''

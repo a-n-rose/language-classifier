@@ -9,6 +9,7 @@ import pandas as pd
 import config
 from pathlib import Path
 import time
+import itertools
 
 
 class Batch_Data:
@@ -30,11 +31,18 @@ class Batch_Data:
         dict_ipa = dict()
         for num in range(len(ipa_list)):
             dict_ipa[ipa_list[num]] = num
-        print(dict_ipa)
         self.dict_ipa = dict_ipa
         return self
 
-    def all_ipa_present(self):
+    def get_num_classes(self,ipa_list,ipa_window):
+        self.poss_combinations = itertools.combinations(ipa_list, ipa_window)
+        count = 0
+        for i in self.poss_combinations:
+            count += 1
+        self.num_classes = count
+        return self
+    
+    def all_ipa_present(self,ipa_window):
         try:
             start = time.time()
             ipa_chars = []
@@ -47,9 +55,10 @@ class Batch_Data:
                     else:
                         ipa_chars.append(char)
             self.build_ipa_dict(ipa_chars)
+            self.get_num_classes(ipa_chars,ipa_window)
             end = time.time()
             total_time = end - start
-            return ipa_chars, total_time, count
+            return ipa_chars, self.num_classes
         except Exception as e:
             print(e)
             
@@ -68,7 +77,6 @@ class Batch_Data:
         else:
             print("All IPA data prepped for network.")
             return None
-        print(data_index)
         #get annotation data for output label
         ipa = self.ipa[data_index]
         recording_session = ipa[0]
@@ -82,10 +90,8 @@ class Batch_Data:
         mfcc = self.mfcc[mfcc_indices,:40]
         
         mfcc = mfcc.reshape(mfcc.shape[1],mfcc.shape[2])
-        #print(mfcc)
-        print(mfcc.shape)
         num_mfcc = mfcc.shape[0]
-        print("num mfcc samples: {}".format(num_mfcc))
+        print("num mfcc samples for this recording: {}".format(num_mfcc))
         num_features = mfcc.shape[1]
         print("num_features: {}".format(num_features))
         num_mfcc_per_ipa = num_mfcc//num_ipa
@@ -104,11 +110,12 @@ class Batch_Data:
             
         total_batches = int(num_ipa/ipa_shift - (ipa_window - ipa_shift))
         #create skeleton for where batches will be collected
+        #ipa window is added here for the classification info (i.e. how many ipa ids will be located here)
         batch = np.zeros(shape=(total_batches,batch_size,num_features+ipa_window))
         
         for batch_iter in range(total_batches):
             start = batch_iter * (num_mfcc_per_ipa * ipa_shift) #shifting at indicated shift length (e.g. if ipa_shift = 1, then shift 1 letter at a time)
-            end = start + batch_mfcc #window of 3 letters
+            end = start + batch_mfcc #window of __ letters
             assert end < len(mfcc) 
             index_ipa = batch_iter * ipa_shift
             ipa_label = annotation_ipa[index_ipa:index_ipa+ipa_window]

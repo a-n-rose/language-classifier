@@ -33,7 +33,11 @@ batch_mfcc,total_batches = batch_prep.generate_batch(batch_size=18,ipa_window=3,
 for i in range(total_batches):
     print("\nBatch {}:".format(i+1))
     len_batches = len(batch_mfcc[i])
-    print("IPA values are: {}".format(batch_mfcc[i][0][40:]))
+    ipa_vals = batch_mfcc[i][0][40:]
+    ipa_vals = [int(val) for val in ipa_vals]
+    print("IPA values are: {}".format(ipa_vals))
+    for x in ipa_vals:
+        print(x, list(batch_prep.dict_ipa.keys())[list(batch_prep.dict_ipa.values()).index(x)])
 
         
 

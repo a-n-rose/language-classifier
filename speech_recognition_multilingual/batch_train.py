@@ -23,10 +23,10 @@ x_ipa = data_ipa.values
 x_mfcc = data_mfcc.values
 
 batch_prep = Batch_Data(x_ipa,x_mfcc)
-ipa_list = batch_prep.all_ipa_present(ipa_window=3)
+ipa_list, num_classes = batch_prep.all_ipa_present(ipa_window=3)
 
-print("\n\nIPA characters existent in dataset: \n{}\n\n".format(ipa_list[0]))
-print("Number of total classes: {}".format(ipa_list[1]))
+print("\n\nIPA characters existent in dataset: \n{}\n\n".format(ipa_list))
+print("Number of total classes: {}".format(num_classes))
 
 batch_mfcc,total_batches = batch_prep.generate_batch(batch_size=18,ipa_window=3,ipa_shift=3)
 
@@ -39,9 +39,11 @@ for i in range(total_batches):
     for x in ipa_vals:
         print(x, list(batch_prep.dict_ipa.keys())[list(batch_prep.dict_ipa.values()).index(x)])
 
-
 '''
-Next step is to form X and y data, after one-hot-encoding the y data with keras.utils.to_categorical(y, num_classes = batch_prep.num_classes).
+Next steps:
+
+1) Form Train, Validate, Test Datasets (do this manually... keep from same speakers to get mixed up too much) -- do this w ipa data
+2) Form X and y data, after one-hot-encoding the y data with keras.utils.to_categorical(y, num_classes = batch_prep.num_classes).
 
 Question I have: would it make a difference if ipa stress markers were included? 
 '''

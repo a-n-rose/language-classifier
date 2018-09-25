@@ -11,25 +11,7 @@ from pathlib import Path
 import time
 import itertools
 
-class Error(Exception):
-    """Base class for other exceptions"""
-    pass
-
-class ValidateDataRequiresTestDataError(Error):
-   """If rowstart is specified but limit is not"""
-   pass
-
-class ShiftLargerThanWindowError(Error):
-   """If rowstart is specified but limit is not"""
-   pass
-
-class TrainDataMustBeSetError(Error):
-   """If rowstart is specified but limit is not"""
-   pass
-
-class EmptyDataSetError(Error):
-   """If rowstart is specified but limit is not"""
-   pass
+from Errors import Error, ValidateDataRequiresTestDataError, ShiftLargerThanWindowError, TrainDataMustBeSetError, EmptyDataSetError
 
 class Batch_Data:
     def __init__(self,data_ipa,data_mfcc):
@@ -184,6 +166,11 @@ class Batch_Data:
             ipa_label = annotation_ipa[index_ipa:index_ipa+ipa_window]
             ipa_ints = self.retrieve_ipa_key(ipa_label)
             batch_input = mfcc[start:end,:]
+            if batch_mfcc < batch_size:
+                diff = batch_size - batch_mfcc
+                pad_zeros = np.zeros(diff,batch_input.shape[1])
+                batch_input = np.c_[batch_input,pad_zeros]
+                print(batch_input)
             len_mfccs = len(batch_input)
             add_ints = np.repeat([ipa_ints],len_mfccs,axis=0)
             batch_input = np.c_[batch_input,add_ints]

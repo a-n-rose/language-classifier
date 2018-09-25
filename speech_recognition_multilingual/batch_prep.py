@@ -72,7 +72,9 @@ class Batch_Data:
     def build_ipa_dict(self,ipa_list):
         dict_ipa = dict()
         for num in range(len(ipa_list)):
-            dict_ipa[ipa_list[num]] = num
+            dict_ipa[ipa_list[num]] = num+1
+        #create entry for zero classification (zero padded entries)
+        dict_ipa[""] = 0
         self.dict_ipa = dict_ipa
         return self
 
@@ -81,7 +83,7 @@ class Batch_Data:
         count = 0
         for i in self.poss_combinations:
             count += 1
-        self.num_classes = count
+        self.num_classes = count +1 #Final +1 accounts for the classification of [0,0,0], i.e. zero padded entries
         return self
     
     def all_ipa_present(self,ipa_window):
@@ -170,12 +172,15 @@ class Batch_Data:
             ipa_label = annotation_ipa[index_ipa:index_ipa+ipa_window]
             ipa_ints = self.retrieve_ipa_key(ipa_label)
             batch_input = mfcc[start:end,:]
+            len_mfccs = len(batch_input)
+            add_ints = np.repeat([ipa_ints],len_mfccs,axis=0)
             if batch_input.shape[0] < batch_size:
                 diff = batch_size - batch_input.shape[0]
                 pad_zeros = np.zeros(shape=(diff,batch_input.shape[1]))
                 batch_input = np.r_[batch_input,pad_zeros]
-            len_mfccs = len(batch_input)
-            add_ints = np.repeat([ipa_ints],len_mfccs,axis=0)
+                zero_list = np.zeros(shape=(ipa_window))
+                add_zeros = np.repeat([zero_list],diff,axis=0)
+                add_ints = np.r_[add_ints,add_zeros]
             batch_input = np.c_[batch_input,add_ints]
             batch[batch_iter]=batch_input
         

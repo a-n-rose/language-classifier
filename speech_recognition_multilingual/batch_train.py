@@ -32,7 +32,7 @@ try:
 
     #set up train,validate,test data
     #default settings result in data categorized so: 60% train, 20% validate, 20% train
-    batch_prep.train_val_test(train=0.8,test=0.2)
+    batch_prep.train_val_test()
     #the ipa_train will control the data sets; the mfcc data will rely on the ipa data
     #Note: because each row of IPA data might be different lengths in MFCC data, 
     #the sets won't 100% correspond to their designated sizes. HOWEVER, it is more 
@@ -46,13 +46,12 @@ try:
 
     #batch_mfcc,total_batches = batch_prep.generate_batch(batch_size=18,ipa_window=3,ipa_shift=3)
 
-    batch_train, total_batches = batch_prep.generate_batch(ipa_train,batch_size=18,ipa_window=3,ipa_shift=3)
-    print(total_batches)
-    print(batch_train)
+    batch_train, total_batches = batch_prep.generate_batch(ipa_train,batch_size=20,ipa_window=3,ipa_shift=3)
 
-    batch_val, total_val_batches = batch_prep.generate_batch(ipa_test,batch_size=18,ipa_window=3,ipa_shift=3)
-    print(total_val_batches)
-    print(batch_val) 
+    batch_val, total_val_batches = batch_prep.generate_batch(ipa_val,batch_size=20,ipa_window=3,ipa_shift=3)
+
+    batch_test, total_test_batches = batch_prep.generate_batch(ipa_test,batch_size=20,ipa_window=3,ipa_shift=3)
+
 
 #for i in range(total_batches):
     #print("\nBatch {}:".format(i+1))

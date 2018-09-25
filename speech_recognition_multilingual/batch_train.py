@@ -24,9 +24,18 @@ x_mfcc = data_mfcc.values
 
 batch_prep = Batch_Data(x_ipa,x_mfcc)
 ipa_list, num_classes = batch_prep.all_ipa_present(ipa_window=3)
-
 print("\n\nIPA characters existent in dataset: \n{}\n\n".format(ipa_list))
 print("Number of total classes: {}".format(num_classes))
+
+#set up train,validate,test data
+#default settings result in data categorized so: 60% train, 20% validate, 20% train
+batch_prep.train_val_test()
+#the ipa_train will control the data sets; the mfcc data will rely on the ipa data
+#Note: because each row of IPA data might be different lengths in MFCC data, 
+#the sets won't 100% correspond to their designated sizes. HOWEVER, it is more 
+#important (for now) to keep as much speaker between group mixing. That is most easily 
+#achieved with the IPA data
+ipa_train, ipa_val, ipa_test = batch_prep.get_datasets()
 
 batch_mfcc,total_batches = batch_prep.generate_batch(batch_size=18,ipa_window=3,ipa_shift=3)
 

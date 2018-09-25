@@ -17,6 +17,35 @@ class Batch_Data:
         self.ipa = data_ipa
         self.mfcc = data_mfcc
         self.data_index = 0
+        
+    def train_val_test(self,train=None,validate=None,test=None):
+        if train and validate and test == None:
+            self.perc_train = 0.6
+            self.perc_val = 0.2
+            self.perc_test = 0.2
+        elif train and test != None and validate == None:
+            self.perc_train = train
+            self.perc_validate = 0
+            self.perc_test = test
+        elif train and validate and test != None:
+            self.perc_train = train
+            self.perc_validate = validate
+            self.perc_test = test
+        elif train != None and validate and test == None:
+            self.perc_train = train
+            self.validate = 0
+            self.test = round(1.-train,1)
+            print("No validation set created. Only test set based on percentage alloted to train data.")
+        elif train and validate != None and test == None:
+            raise ValidateDataRequiresTestDataError("In order to set aside validation data, please enter percentage for test data. Otherwise, remove all settings.")
+        return self
+    
+    def get_dataset(self):
+        data_total_rows = len(self.ipa)
+        self.rows_train = int(data_total_rows * self.perc_train)
+        self.rows_val = int(data_total_rows * self.perc_val)
+        self.rows_test = int(data_total_rows * self.perc_test)
+
 
     def remove_spaces_endofline(self,list_or_string):
         if isinstance(list_or_string,str):

@@ -11,6 +11,21 @@ from pathlib import Path
 import time
 import itertools
 
+class Error(Exception):
+    """Base class for other exceptions"""
+    pass
+
+class ValidateDataRequiresTestDataError(Error):
+   """If rowstart is specified but limit is not"""
+   pass
+
+class ShiftLargerThanWindowError(Error):
+   """If rowstart is specified but limit is not"""
+   pass
+
+class TrainDataMustBeSetError(Error):
+   """If rowstart is specified but limit is not"""
+   pass
 
 class Batch_Data:
     def __init__(self,data_ipa,data_mfcc):
@@ -19,32 +34,38 @@ class Batch_Data:
         self.data_index = 0
         
     def train_val_test(self,train=None,validate=None,test=None):
-        if train and validate and test == None:
+        if train == None and validate == None and test == None:
             self.perc_train = 0.6
             self.perc_val = 0.2
             self.perc_test = 0.2
-        elif train and test != None and validate == None:
+        elif train != None and test != None and validate == None:
             self.perc_train = train
-            self.perc_validate = 0
+            self.perc_val = 0
             self.perc_test = test
-        elif train and validate and test != None:
+        elif train != None and validate != None and test != None:
             self.perc_train = train
-            self.perc_validate = validate
+            self.perc_val = validate
             self.perc_test = test
-        elif train != None and validate and test == None:
+        elif train != None and validate == None and test == None:
             self.perc_train = train
-            self.validate = 0
-            self.test = round(1.-train,1)
+            self.perc_val = 0
+            self.perc_test = round(1.-train,1)
             print("No validation set created. Only test set based on percentage alloted to train data.")
-        elif train and validate != None and test == None:
+        elif train != None and validate != None and test == None:
             raise ValidateDataRequiresTestDataError("In order to set aside validation data, please enter percentage for test data. Otherwise, remove all settings.")
+        elif train == None:
+            raise TrainDataMustBeSetError("Train percentage must be set for the validation or test data to be prepared.")
         return self
     
-    def get_dataset(self):
+    def get_datasets(self):
         data_total_rows = len(self.ipa)
         self.rows_train = int(data_total_rows * self.perc_train)
         self.rows_val = int(data_total_rows * self.perc_val)
         self.rows_test = int(data_total_rows * self.perc_test)
+        self.train_ipa = self.ipa[:self.rows_train]
+        self.val_ipa = self.ipa[self.rows_train:self.rows_train+self.rows_val]
+        self.test_ipa = self.ipa[self.rows_train+self.rows_val:self.rows_train+self.rows_val+self.rows_test]
+        return self.train_ipa, self.val_ipa, self.test_ipa
 
 
     def remove_spaces_endofline(self,list_or_string):

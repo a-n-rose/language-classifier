@@ -36,17 +36,21 @@ batch_prep.train_val_test()
 #important (for now) to keep as much speaker between group mixing. That is most easily 
 #achieved with the IPA data
 ipa_train, ipa_val, ipa_test = batch_prep.get_datasets()
+print("\n\nTrain Data (rows = {}): \n{}".format(len(ipa_train),ipa_train))
+print("\n\nValidation Data (rows = {}): \n{}".format(len(ipa_val),ipa_val))
+print("\n\nTest Data (rows = {}): \n{}".format(len(ipa_test),ipa_test))
 
-batch_mfcc,total_batches = batch_prep.generate_batch(batch_size=18,ipa_window=3,ipa_shift=3)
 
-for i in range(total_batches):
-    print("\nBatch {}:".format(i+1))
-    len_batches = len(batch_mfcc[i])
-    ipa_vals = batch_mfcc[i][0][40:]
-    ipa_vals = [int(val) for val in ipa_vals]
-    print("IPA values are: {}".format(ipa_vals))
-    for x in ipa_vals:
-        print(x, list(batch_prep.dict_ipa.keys())[list(batch_prep.dict_ipa.values()).index(x)])
+#batch_mfcc,total_batches = batch_prep.generate_batch(batch_size=18,ipa_window=3,ipa_shift=3)
+
+#for i in range(total_batches):
+    #print("\nBatch {}:".format(i+1))
+    #len_batches = len(batch_mfcc[i])
+    #ipa_vals = batch_mfcc[i][0][40:]
+    #ipa_vals = [int(val) for val in ipa_vals]
+    #print("IPA values are: {}".format(ipa_vals))
+    #for x in ipa_vals:
+        #print(x, list(batch_prep.dict_ipa.keys())[list(batch_prep.dict_ipa.values()).index(x)])
 
 '''
 Next steps:

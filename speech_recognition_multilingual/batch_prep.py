@@ -91,25 +91,19 @@ class Batch_Data:
     
     def all_ipa_present(self,ipa_window):
         self.ipa_window = ipa_window
-        try:
-            start = time.time()
-            ipa_chars = []
-            count = 0
-            for annotation in self.ipa[:,3]:
-                for char in annotation:
-                    count += 1
-                    if char in ipa_chars:
-                        pass
-                    else:
-                        ipa_chars.append(char)
-            ipa_chars = self.remove_spaces_endofline(ipa_chars)
-            self.build_ipa_dict(ipa_chars)
-            self.get_num_classes(ipa_chars)
-            end = time.time()
-            total_time = end - start
-            return ipa_chars, self.num_classes
-        except Exception as e:
-            print(e)
+        ipa_chars = []
+        count = 0
+        for annotation in self.ipa[:,3]:
+            for char in annotation:
+                count += 1
+                if char in ipa_chars:
+                    pass
+                else:
+                    ipa_chars.append(char)
+        ipa_chars = self.remove_spaces_endofline(ipa_chars)
+        self.build_ipa_dict(ipa_chars)
+        self.get_num_classes(ipa_chars)
+        return ipa_chars, self.num_classes
             
     def retrieve_ipa_vals(self,ipa_list):
         ipa_keys = []
@@ -123,7 +117,6 @@ class Batch_Data:
         return self
     
     def get_dataset_value(self,label_str):
-        print(label_str)
         label_int = self.dict_trainvaltest[label_str]
         return label_int
 
@@ -148,9 +141,7 @@ class Batch_Data:
         
         mfcc = mfcc.reshape(mfcc.shape[1],mfcc.shape[2])
         num_mfcc = mfcc.shape[0]
-        print("num mfcc samples for this recording: {}".format(num_mfcc))
         num_features = mfcc.shape[1]
-        print("num_features: {}".format(num_features))
         num_mfcc_per_ipa = num_mfcc//num_ipa
         batch_mfcc = num_mfcc_per_ipa*3
     

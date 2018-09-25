@@ -35,7 +35,6 @@ class Connect_db:
             raise DatabaseLimitError("\nLimitMissingError: Need a LIMIT value in order to specify a ROWSTART value.\n")
             
         msg = ''' SELECT * FROM {}{} %s'''.format(self.table,extra) % (" AND ".join(col_val))
-        print(msg)
         self.c.execute(msg)
         data = self.c.fetchall()
         df = pd.DataFrame(data)
@@ -48,7 +47,6 @@ class Connect_db:
         for i in columns:
             column_type.append('"'+str(i)+'" real')
         msg = '''CREATE TABLE IF NOT EXISTS {}("dataset" int, %s)'''.format(self.table) % ", ".join(column_type)
-        print(msg)
         self.c.execute(msg)
         self.conn.commit()
         return None
@@ -65,10 +63,8 @@ class Connect_db:
                 else:
                     col_var+=' ?'
             msg = '''INSERT INTO {} VALUES (%s) '''.format(self.table) % col_var
-            print(msg)
             self.c.executemany(msg,x)
             self.conn.commit()
-        print("Completed saving matrix to DATABASE {} in TABLE ".format(self.database,self.table))
         return None
     
     def close_conn(self):

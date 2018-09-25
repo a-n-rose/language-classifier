@@ -18,6 +18,11 @@ database_mfcc = 'sp_mfcc_IPA3.db'
 table_mfcc = 'mfcc_40'
 mfcc = Connect_db(database_mfcc, table_mfcc)
 
+#to save the collected datasets:
+database_final = 'batchdata_mfcc_ipa_datasets.db'
+table_final = 'english'
+final = Connect_db(database_final,table_final)
+
 try:
     data_ipa = ipa.sqldata2df(limit=1000000)
     data_mfcc = mfcc.sqldata2df(limit=1000000)
@@ -57,7 +62,14 @@ try:
     print("Shape of data: {}".format(batch_train.shape))
     print("Length of data: {}".format(len(batch_train)))
     #create batches for each dataset:
+    
+    final.dataset2sql(batch_train)
+    
     for i in range(total_train_batches):
+        print(batch_train[i].shape)
+        df = pd.DataFrame(batch_train[i])
+        print(df.columns)
+        print(df)
         print("\nBatch {}:".format(i+1))
         len_batches = len(batch_train[i])
         ipa_vals = batch_train[i][0][40:]
@@ -76,10 +88,13 @@ except TrainDataMustBeSetError as tds:
     print(tds)
 except EmptyDataSetError as eds:
     print(eds)
+except Error as e:
+    print("Database error: {}".format(e))
 #Close database connections:
 finally:
     ipa.close_conn()
     mfcc.close_conn()
+    final.close_conn()
 
 
 '''

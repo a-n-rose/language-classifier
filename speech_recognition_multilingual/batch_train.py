@@ -45,22 +45,26 @@ try:
 
 
     #batch_mfcc,total_batches = batch_prep.generate_batch(batch_size=18,ipa_window=3,ipa_shift=3)
+    
+    
+    batch_train, total_train_batches = batch_prep.generate_batch(ipa_train,batch_size=20,ipa_window=3,ipa_shift=3)
 
-    batch_train, total_batches = batch_prep.generate_batch(ipa_train,batch_size=20,ipa_window=3,ipa_shift=3)
+    #batch_val, total_val_batches = batch_prep.generate_batch(ipa_val,batch_size=20,ipa_window=3,ipa_shift=3)
 
-    batch_val, total_val_batches = batch_prep.generate_batch(ipa_val,batch_size=20,ipa_window=3,ipa_shift=3)
+    #batch_test, total_test_batches = batch_prep.generate_batch(ipa_test,batch_size=20,ipa_window=3,ipa_shift=3)
 
-    batch_test, total_test_batches = batch_prep.generate_batch(ipa_test,batch_size=20,ipa_window=3,ipa_shift=3)
-
-
-#for i in range(total_batches):
-    #print("\nBatch {}:".format(i+1))
-    #len_batches = len(batch_mfcc[i])
-    #ipa_vals = batch_mfcc[i][0][40:]
-    #ipa_vals = [int(val) for val in ipa_vals]
-    #print("IPA values are: {}".format(ipa_vals))
-    #for x in ipa_vals:
-        #print(x, list(batch_prep.dict_ipa.keys())[list(batch_prep.dict_ipa.values()).index(x)])
+    print(total_train_batches)
+    print("Shape of data: {}".format(batch_train.shape))
+    print("Length of data: {}".format(len(batch_train)))
+    #create batches for each dataset:
+    for i in range(total_train_batches):
+        print("\nBatch {}:".format(i+1))
+        len_batches = len(batch_train[i])
+        ipa_vals = batch_train[i][0][40:]
+        ipa_vals = [int(val) for val in ipa_vals]
+        print("IPA values are: {}".format(ipa_vals))
+        ipa_keys = batch_prep.retrieve_ipa_keys(ipa_vals)
+        print("IPA letters are: {}".format(ipa_keys))
 
 except DatabaseLimitError as dle:
     print(dle)
@@ -80,8 +84,8 @@ finally:
 
 '''
 Next steps:
-1) fix the sample size to match batch size - zero padding if not same length
-2) Form X and y data, after one-hot-encoding the y data with keras.utils.to_categorical(y, num_classes = batch_prep.num_classes).
+
+1) Form X and y data, after one-hot-encoding the y data with keras.utils.to_categorical(y, num_classes = batch_prep.num_classes).
 
 Question I have: would it make a difference if ipa stress markers were included? 
 '''

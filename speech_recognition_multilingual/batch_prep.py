@@ -107,24 +107,34 @@ class Batch_Data:
         except Exception as e:
             print(e)
             
-    def retrieve_ipa_key(self,ipa_list):
+    def retrieve_ipa_vals(self,ipa_list):
         ipa_keys = []
         for char in ipa_list:
             ipa_keys.append(self.dict_ipa[char])
         return ipa_keys
 
+    
+    #def get_X_y(self,data):
+        #len_data = data.shape[0]
+        #x = np.zeros((len_data,self.batch_size,self.num_steps))
+        #y = np.zeros((len_data,self.batch_size,self.num_steps,self.num_classes))
+        #while True:
+            #for i in range(batch_size):
+                #if current_idx + num_steps >=
+        #pass
+    
     #for each row in data_ipa
     def generate_batch(self,ipa_dataset,batch_size,ipa_window,ipa_shift):
+        self.batch_size = batch_size
+        self.label_len = ipa_window
+        self.num_steps = ipa_shift
         if len(ipa_dataset)<1:
             raise EmptyDataSetError("The provided dataset is empty.")
         if ipa_shift > ipa_window:
             raise ShiftLargerThanWindowError("The shift cannot exceed the size of the window of IPA characters.")
-        if self.data_index is not None:
-            data_index = self.data_index
-        else:
-            print("All IPA data prepped for network.")
-            return None
         #get annotation data for output label
+        data_index = self.data_index
+        print(data_index)
         ipa = ipa_dataset[data_index]
         recording_session = ipa[0]
         wavefile = ipa[1]
@@ -170,7 +180,7 @@ class Batch_Data:
                 end = len(mfcc)
             index_ipa = batch_iter * ipa_shift
             ipa_label = annotation_ipa[index_ipa:index_ipa+ipa_window]
-            ipa_ints = self.retrieve_ipa_key(ipa_label)
+            ipa_ints = self.retrieve_ipa_vals(ipa_label)
             batch_input = mfcc[start:end,:]
             len_mfccs = len(batch_input)
             add_ints = np.repeat([ipa_ints],len_mfccs,axis=0)
@@ -187,6 +197,12 @@ class Batch_Data:
         if data_index < len(ipa):
             self.data_index += 1
         else:
-            self.data_index = None
+            self.data_index = 0
             print("Through all of IPA data")
         return batch, total_batches
+    
+    def retrieve_ipa_keys(self,ipa_list):
+        ipa_keys = []
+        for x in ipa_list:
+            ipa_keys.append(list(self.dict_ipa.keys())[list(self.dict_ipa.values()).index(x)])
+        return ipa_keys

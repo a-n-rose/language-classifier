@@ -29,7 +29,7 @@ print("Number of total classes: {}".format(num_classes))
 
 #set up train,validate,test data
 #default settings result in data categorized so: 60% train, 20% validate, 20% train
-batch_prep.train_val_test()
+batch_prep.train_val_test(train=0.8,test=0.2)
 #the ipa_train will control the data sets; the mfcc data will rely on the ipa data
 #Note: because each row of IPA data might be different lengths in MFCC data, 
 #the sets won't 100% correspond to their designated sizes. HOWEVER, it is more 
@@ -43,6 +43,14 @@ print("\n\nTest Data (rows = {}): \n{}".format(len(ipa_test),ipa_test))
 
 #batch_mfcc,total_batches = batch_prep.generate_batch(batch_size=18,ipa_window=3,ipa_shift=3)
 
+batch_train, total_batches = batch_prep.generate_batch(ipa_train,batch_size=18,ipa_window=3,ipa_shift=3)
+print(total_batches)
+print(batch_train)
+
+batch_val, total_val_batches = batch_prep.generate_batch(ipa_val,batch_size=18,ipa_window=3,ipa_shift=3)
+print(total_val_batches)
+print(batch_val) 
+
 #for i in range(total_batches):
     #print("\nBatch {}:".format(i+1))
     #len_batches = len(batch_mfcc[i])
@@ -55,7 +63,6 @@ print("\n\nTest Data (rows = {}): \n{}".format(len(ipa_test),ipa_test))
 '''
 Next steps:
 
-1) Form Train, Validate, Test Datasets (do this manually... keep from same speakers to get mixed up too much) -- do this w ipa data
 2) Form X and y data, after one-hot-encoding the y data with keras.utils.to_categorical(y, num_classes = batch_prep.num_classes).
 
 Question I have: would it make a difference if ipa stress markers were included? 

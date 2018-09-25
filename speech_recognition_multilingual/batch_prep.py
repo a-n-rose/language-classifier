@@ -27,6 +27,10 @@ class TrainDataMustBeSetError(Error):
    """If rowstart is specified but limit is not"""
    pass
 
+class EmptyDataSetError(Error):
+   """If rowstart is specified but limit is not"""
+   pass
+
 class Batch_Data:
     def __init__(self,data_ipa,data_mfcc):
         self.ipa = data_ipa
@@ -126,7 +130,9 @@ class Batch_Data:
         return ipa_keys
 
     #for each row in data_ipa
-    def generate_batch(self,batch_size,ipa_window,ipa_shift):
+    def generate_batch(self,ipa_dataset,batch_size,ipa_window,ipa_shift):
+        if len(ipa_dataset)<1:
+            raise EmptyDataSetError("The provided dataset is empty.")
         if ipa_shift > ipa_window:
             raise ShiftLargerThanWindowError("The shift cannot exceed the size of the window of IPA characters.")
         if self.data_index is not None:
@@ -135,7 +141,7 @@ class Batch_Data:
             print("All IPA data prepped for network.")
             return None
         #get annotation data for output label
-        ipa = self.ipa[data_index]
+        ipa = ipa_dataset[data_index]
         recording_session = ipa[0]
         wavefile = ipa[1]
         annotation_ipa = self.remove_spaces_endofline(ipa[3])

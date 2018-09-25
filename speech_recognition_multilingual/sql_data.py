@@ -42,18 +42,19 @@ class Connect_db:
         return df
     
     def createsqltable(self,num_cols):
-        columns = list((range(0,num_cols)))
+        #-1 because one column is already accounted for in "dataset" int
+        columns = list((range(0,num_cols-1)))
         column_type = []
         for i in columns:
             column_type.append('"'+str(i)+'" real')
-        msg = '''CREATE TABLE IF NOT EXISTS {}(%s)'''.format(self.table) % ", ".join(column_type)
+        msg = '''CREATE TABLE IF NOT EXISTS {}("dataset" int, %s)'''.format(self.table) % ", ".join(column_type)
         print(msg)
         self.c.execute(msg)
         self.conn.commit()
         return None
     
-    def dataset2sql(self,matrix):
-        num_cols = matrix[0].shape[1]
+    def databatch2sql(self,matrix):
+        num_cols = matrix[0].shape[1] 
         self.createsqltable(num_cols)
         for i in range(len(matrix)):
             x = matrix[i]

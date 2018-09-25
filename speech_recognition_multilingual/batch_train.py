@@ -19,7 +19,7 @@ table_mfcc = 'mfcc_40'
 mfcc = Connect_db(database_mfcc, table_mfcc)
 
 #to save the collected datasets:
-database_final = 'batchdata_mfcc_ipa_datasets.db'
+database_final = 'batchdata_mfcc_ipa_datasets5.db'
 table_final = 'english'
 final = Connect_db(database_final,table_final)
 
@@ -37,6 +37,7 @@ try:
 
     #set up train,validate,test data
     #default settings result in data categorized so: 60% train, 20% validate, 20% train
+    #also sets dict of key and value pairs: train = 1, val = 2, test = 3, for database
     batch_prep.train_val_test()
     #the ipa_train will control the data sets; the mfcc data will rely on the ipa data
     #Note: because each row of IPA data might be different lengths in MFCC data, 
@@ -44,39 +45,21 @@ try:
     #important (for now) to keep as much speaker between group mixing. That is most easily 
     #achieved with the IPA data
     ipa_train, ipa_val, ipa_test = batch_prep.get_datasets()
-    print("\n\nTrain Data (rows = {}): \n{}".format(len(ipa_train),ipa_train))
-    print("\n\nValidation Data (rows = {}): \n{}".format(len(ipa_val),ipa_val))
-    print("\n\nTest Data (rows = {}): \n{}".format(len(ipa_test),ipa_test))
+    ipa_train_label = ipa_train[1]
+    ipa_train_data = ipa_train[0]
+    print("\n\nTrain Data (rows = {}): \n{}".format(len(ipa_train_data),ipa_train_data))
+    #print("\n\nValidation Data (rows = {}): \n{}".format(len(ipa_val),ipa_val))
+    #print("\n\nTest Data (rows = {}): \n{}".format(len(ipa_test),ipa_test))
 
-
-    #batch_mfcc,total_batches = batch_prep.generate_batch(batch_size=18,ipa_window=3,ipa_shift=3)
+    #define perameters for the batches - will be defined to all batches made
+    #in this class instance
+    batch_prep.def_batch(batch_size=20,ipa_shift=3)
     
-    
-    batch_train, total_train_batches = batch_prep.generate_batch(ipa_train,batch_size=20,ipa_window=3,ipa_shift=3)
+    for row in ipa_train_data:
+        batch_row_train, total_row_batches = batch_prep.generate_batch(row,ipa_train_label)
+        print(batch_row_train.shape)
+        final.databatch2sql(batch_row_train)
 
-    #batch_val, total_val_batches = batch_prep.generate_batch(ipa_val,batch_size=20,ipa_window=3,ipa_shift=3)
-
-    #batch_test, total_test_batches = batch_prep.generate_batch(ipa_test,batch_size=20,ipa_window=3,ipa_shift=3)
-
-    print(total_train_batches)
-    print("Shape of data: {}".format(batch_train.shape))
-    print("Length of data: {}".format(len(batch_train)))
-    #create batches for each dataset:
-    
-    final.dataset2sql(batch_train)
-    
-    for i in range(total_train_batches):
-        print(batch_train[i].shape)
-        df = pd.DataFrame(batch_train[i])
-        print(df.columns)
-        print(df)
-        print("\nBatch {}:".format(i+1))
-        len_batches = len(batch_train[i])
-        ipa_vals = batch_train[i][0][40:]
-        ipa_vals = [int(val) for val in ipa_vals]
-        print("IPA values are: {}".format(ipa_vals))
-        ipa_keys = batch_prep.retrieve_ipa_keys(ipa_vals)
-        print("IPA letters are: {}".format(ipa_keys))
 
 except DatabaseLimitError as dle:
     print(dle)
@@ -88,6 +71,8 @@ except TrainDataMustBeSetError as tds:
     print(tds)
 except EmptyDataSetError as eds:
     print(eds)
+except KeyError as ke:
+    print(ke)
 except Error as e:
     print("Database error: {}".format(e))
 #Close database connections:

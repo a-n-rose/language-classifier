@@ -40,6 +40,7 @@ class Batch_Data:
             raise ValidateDataRequiresTestDataError("In order to set aside validation data, please enter percentage for test data. Otherwise, remove all settings.")
         elif train == None:
             raise TrainDataMustBeSetError("Train percentage must be set for the validation or test data to be prepared.")
+        self.dict_trainvaltest = {'train':1,'validate':2,'test':3}
         return self
     
     def get_datasets(self):
@@ -50,7 +51,10 @@ class Batch_Data:
         self.train_ipa = self.ipa[:self.rows_train]
         self.val_ipa = self.ipa[self.rows_train:self.rows_train+self.rows_val]
         self.test_ipa = self.ipa[self.rows_train+self.rows_val:self.rows_train+self.rows_val+self.rows_test]
-        return self.train_ipa, self.val_ipa, self.test_ipa
+        self.str_train = 'train'
+        self.str_val = 'validate'
+        self.str_test = 'test'
+        return (self.train_ipa,self.str_train), (self.val_ipa,self.str_val), (self.test_ipa,self.str_test)
 
 
     def remove_spaces_endofline(self,list_or_string):
@@ -117,12 +121,19 @@ class Batch_Data:
         self.batch_size = batch_size
         self.ipa_shift = ipa_shift
         return self
+    
+    def get_dataset_value(self,label_str):
+        print(label_str)
+        label_int = self.dict_trainvaltest[label_str]
+        return label_int
 
-    def generate_batch(self,ipa_dataset_row):
+    def generate_batch(self,ipa_dataset_row,dataset_label):
         if len(ipa_dataset_row)<1:
             raise EmptyDataSetError("The provided dataset row is empty.")
         if self.ipa_shift > self.ipa_window:
             raise ShiftLargerThanWindowError("The shift cannot exceed the size of the window of IPA characters.")
+        #get dataset value to apply to data
+        dataset_label_int = self.get_dataset_value(dataset_label)
         #get annotation data for output label
         ipa = ipa_dataset_row
         recording_session = ipa[0]
@@ -155,7 +166,8 @@ class Batch_Data:
         total_batches = int(num_ipa/self.ipa_shift - (self.ipa_window - self.ipa_shift))
         #create skeleton for where batches will be collected
         #ipa window is added here for the classification info (i.e. how many ipa ids will be located here)
-        batch = np.zeros(shape=(total_batches,self.batch_size,num_features+self.ipa_window))
+        #also will include dataset label 
+        batch = np.zeros(shape=(total_batches,self.batch_size,num_features+self.ipa_window+1))
         
         for batch_iter in range(total_batches):
             start = batch_iter * (num_mfcc_per_ipa * self.ipa_shift) #shifting at indicated shift length (e.g. if ipa_shift = 1, then shift 1 letter at a time)
@@ -180,7 +192,9 @@ class Batch_Data:
                 zero_list = np.zeros(shape=(self.ipa_window))
                 add_zeros = np.repeat([zero_list],diff,axis=0)
                 add_ints = np.r_[add_ints,add_zeros]
-            batch_input = np.c_[batch_input,add_ints]
+            add_dataset_label = np.repeat([dataset_label_int],len(batch_input),axis=0)
+            batch_input = np.c_[add_dataset_label,batch_input,add_ints]
+            #batch_input = np.c_[batch_input,add_ints]
             batch[batch_iter]=batch_input
         
         return batch, total_batches
@@ -190,3 +204,4 @@ class Batch_Data:
         for x in ipa_list:
             ipa_keys.append(list(self.dict_ipa.keys())[list(self.dict_ipa.values()).index(x)])
         return ipa_keys
+    

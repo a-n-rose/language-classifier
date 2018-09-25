@@ -17,7 +17,6 @@ class Batch_Data:
     def __init__(self,data_ipa,data_mfcc):
         self.ipa = data_ipa
         self.mfcc = data_mfcc
-        self.data_index = 0
         
     def train_val_test(self,train=None,validate=None,test=None):
         if train == None and validate == None and test == None:
@@ -78,8 +77,8 @@ class Batch_Data:
         self.dict_ipa = dict_ipa
         return self
 
-    def get_num_classes(self,ipa_list,ipa_window):
-        self.poss_combinations = itertools.combinations(ipa_list, ipa_window)
+    def get_num_classes(self,ipa_list):
+        self.poss_combinations = itertools.combinations(ipa_list, self.ipa_window)
         count = 0
         for i in self.poss_combinations:
             count += 1
@@ -87,6 +86,7 @@ class Batch_Data:
         return self
     
     def all_ipa_present(self,ipa_window):
+        self.ipa_window = ipa_window
         try:
             start = time.time()
             ipa_chars = []
@@ -100,7 +100,7 @@ class Batch_Data:
                         ipa_chars.append(char)
             ipa_chars = self.remove_spaces_endofline(ipa_chars)
             self.build_ipa_dict(ipa_chars)
-            self.get_num_classes(ipa_chars,ipa_window)
+            self.get_num_classes(ipa_chars)
             end = time.time()
             total_time = end - start
             return ipa_chars, self.num_classes
@@ -112,30 +112,19 @@ class Batch_Data:
         for char in ipa_list:
             ipa_keys.append(self.dict_ipa[char])
         return ipa_keys
-
     
-    #def get_X_y(self,data):
-        #len_data = data.shape[0]
-        #x = np.zeros((len_data,self.batch_size,self.num_steps))
-        #y = np.zeros((len_data,self.batch_size,self.num_steps,self.num_classes))
-        #while True:
-            #for i in range(batch_size):
-                #if current_idx + num_steps >=
-        #pass
-    
-    #for each row in data_ipa
-    def generate_batch(self,ipa_dataset,batch_size,ipa_window,ipa_shift):
+    def def_batch(self,batch_size,ipa_shift):
         self.batch_size = batch_size
-        self.label_len = ipa_window
-        self.num_steps = ipa_shift
-        if len(ipa_dataset)<1:
-            raise EmptyDataSetError("The provided dataset is empty.")
-        if ipa_shift > ipa_window:
+        self.ipa_shift = ipa_shift
+        return self
+
+    def generate_batch(self,ipa_dataset_row):
+        if len(ipa_dataset_row)<1:
+            raise EmptyDataSetError("The provided dataset row is empty.")
+        if self.ipa_shift > self.ipa_window:
             raise ShiftLargerThanWindowError("The shift cannot exceed the size of the window of IPA characters.")
         #get annotation data for output label
-        data_index = self.data_index
-        print(data_index)
-        ipa = ipa_dataset[data_index]
+        ipa = ipa_dataset_row
         recording_session = ipa[0]
         wavefile = ipa[1]
         annotation_ipa = self.remove_spaces_endofline(ipa[3])
@@ -159,46 +148,41 @@ class Batch_Data:
         overlap = False
         #make sure there is a total of 3 IPA characters (or the size of the window) per input (don't end up with with only 1 IPA character as classification sequence)
         if overlap == False:   
-            num_ipa_diff = num_ipa % ipa_window
+            num_ipa_diff = num_ipa % self.ipa_window
             num_ipa -= num_ipa_diff
             annotation_ipa = annotation_ipa[:num_ipa]
             
-        total_batches = int(num_ipa/ipa_shift - (ipa_window - ipa_shift))
+        total_batches = int(num_ipa/self.ipa_shift - (self.ipa_window - self.ipa_shift))
         #create skeleton for where batches will be collected
         #ipa window is added here for the classification info (i.e. how many ipa ids will be located here)
-        batch = np.zeros(shape=(total_batches,batch_size,num_features+ipa_window))
+        batch = np.zeros(shape=(total_batches,self.batch_size,num_features+self.ipa_window))
         
         for batch_iter in range(total_batches):
-            start = batch_iter * (num_mfcc_per_ipa * ipa_shift) #shifting at indicated shift length (e.g. if ipa_shift = 1, then shift 1 letter at a time)
+            start = batch_iter * (num_mfcc_per_ipa * self.ipa_shift) #shifting at indicated shift length (e.g. if ipa_shift = 1, then shift 1 letter at a time)
             #Ensure the input batchsizes match what is expected:
-            if batch_mfcc <= batch_size:
+            if batch_mfcc <= self.batch_size:
                 end = start + batch_mfcc #window of __ letters
             else:
-                over = batch_mfcc - batch_size
+                over = batch_mfcc - self.batch_size
                 end = start + batch_mfcc - over
             if end > len(mfcc):
                 end = len(mfcc)
-            index_ipa = batch_iter * ipa_shift
-            ipa_label = annotation_ipa[index_ipa:index_ipa+ipa_window]
+            index_ipa = batch_iter * self.ipa_shift
+            ipa_label = annotation_ipa[index_ipa:index_ipa+self.ipa_window]
             ipa_ints = self.retrieve_ipa_vals(ipa_label)
             batch_input = mfcc[start:end,:]
             len_mfccs = len(batch_input)
             add_ints = np.repeat([ipa_ints],len_mfccs,axis=0)
-            if batch_input.shape[0] < batch_size:
-                diff = batch_size - batch_input.shape[0]
+            if batch_input.shape[0] < self.batch_size:
+                diff = self.batch_size - batch_input.shape[0]
                 pad_zeros = np.zeros(shape=(diff,batch_input.shape[1]))
                 batch_input = np.r_[batch_input,pad_zeros]
-                zero_list = np.zeros(shape=(ipa_window))
+                zero_list = np.zeros(shape=(self.ipa_window))
                 add_zeros = np.repeat([zero_list],diff,axis=0)
                 add_ints = np.r_[add_ints,add_zeros]
             batch_input = np.c_[batch_input,add_ints]
             batch[batch_iter]=batch_input
         
-        if data_index < len(ipa):
-            self.data_index += 1
-        else:
-            self.data_index = 0
-            print("Through all of IPA data")
         return batch, total_batches
     
     def retrieve_ipa_keys(self,ipa_list):

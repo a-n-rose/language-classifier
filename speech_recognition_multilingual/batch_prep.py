@@ -141,9 +141,7 @@ class Batch_Data:
         print("num_features: {}".format(num_features))
         num_mfcc_per_ipa = num_mfcc//num_ipa
         batch_mfcc = num_mfcc_per_ipa*3
-        assert batch_mfcc <= batch_size
-        
-        
+    
         #figure out how many batches of MFCC data I have for the total number of IPA chars
         #do I want to overlap? Not right now..
         overlap = False
@@ -160,17 +158,22 @@ class Batch_Data:
         
         for batch_iter in range(total_batches):
             start = batch_iter * (num_mfcc_per_ipa * ipa_shift) #shifting at indicated shift length (e.g. if ipa_shift = 1, then shift 1 letter at a time)
-            end = start + batch_mfcc #window of __ letters
-            assert end < len(mfcc) 
+            #Ensure the input batchsizes match what is expected:
+            if batch_mfcc <= batch_size:
+                end = start + batch_mfcc #window of __ letters
+            else:
+                over = batch_mfcc - batch_size
+                end = start + batch_mfcc - over
+            if end > len(mfcc):
+                end = len(mfcc)
             index_ipa = batch_iter * ipa_shift
             ipa_label = annotation_ipa[index_ipa:index_ipa+ipa_window]
             ipa_ints = self.retrieve_ipa_key(ipa_label)
             batch_input = mfcc[start:end,:]
-            if batch_mfcc < batch_size:
-                diff = batch_size - batch_mfcc
-                pad_zeros = np.zeros(diff,batch_input.shape[1])
-                batch_input = np.c_[batch_input,pad_zeros]
-                print(batch_input)
+            if batch_input.shape[0] < batch_size:
+                diff = batch_size - batch_input.shape[0]
+                pad_zeros = np.zeros(shape=(diff,batch_input.shape[1]))
+                batch_input = np.r_[batch_input,pad_zeros]
             len_mfccs = len(batch_input)
             add_ints = np.repeat([ipa_ints],len_mfccs,axis=0)
             batch_input = np.c_[batch_input,add_ints]

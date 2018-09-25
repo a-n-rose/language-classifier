@@ -2,15 +2,8 @@ import os
 import numpy as np
 import pandas as pd
 import sqlite3
-from sqlite3 import Error
 
-class Error(Exception):
-    """Base class for other exceptions"""
-    pass
-
-class LimitMissingError(Error):
-   """If rowstart is specified but limit is not"""
-   pass
+from Errors import Error, DatabaseLimitError
 
 class Connect_db:
     def __init__(self,database,tablename):
@@ -39,7 +32,7 @@ class Connect_db:
             else:
                 col_val.append(" LIMIT %s" % (limit))
         elif row_start:
-            raise LimitMissingError("\nLimitMissingError: Need a LIMIT value in order to specify a ROWSTART value.\n")
+            raise DatabaseLimitError("\nLimitMissingError: Need a LIMIT value in order to specify a ROWSTART value.\n")
             
         msg = ''' SELECT * FROM {}{} %s'''.format(self.table,extra) % (" AND ".join(col_val))
         print(msg)
@@ -47,3 +40,8 @@ class Connect_db:
         data = self.c.fetchall()
         df = pd.DataFrame(data)
         return df
+    
+    def close_conn(self):
+        if self.conn:
+            self.conn.close()
+        return None

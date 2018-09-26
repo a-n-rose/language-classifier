@@ -218,3 +218,9 @@ class Batch_Data:
         data_3d = matrix.reshape(new_rows,self.batch_size,cols)
         return data_3d
     
+    def normalize_data(self,matrix):
+        mean = np.mean(matrix, axis=0)
+        std = np.std(matrix,axis=0)
+        matrix = (matrix-mean)/std
+        return matrix
+    

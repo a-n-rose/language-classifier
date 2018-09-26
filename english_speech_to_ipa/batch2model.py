@@ -119,7 +119,7 @@ if __name__=="__main__":
         model.compile(loss='categorical_crossentropy',optimizer='adam',metics=['categorical_accuracy'])
         
         #numbers: batchsize and epochs
-        model.fit(X_train,y_train,batchsize=10,epochs=50)
+        model.fit(X_train,y_train,10,50)
         
         
         score = model.evaluate(X_test,y_test,verbose=0)

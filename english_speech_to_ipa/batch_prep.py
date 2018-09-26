@@ -13,9 +13,11 @@ import itertools
 from Errors import Error, ValidateDataRequiresTestDataError, ShiftLargerThanWindowError, TrainDataMustBeSetError, EmptyDataSetError, MFCCdataNotFoundError
 
 class Batch_Data:
-    def __init__(self,data_ipa,data_mfcc):
-        self.ipa = data_ipa
-        self.mfcc = data_mfcc
+    def __init__(self,data_ipa=None,data_mfcc=None):
+        if data_ipa is not None:
+            self.ipa = data_ipa
+        if data_mfcc is not None:
+            self.mfcc = data_mfcc
         
     def train_val_test(self,train=None,validate=None,test=None):
         if train == None and validate == None and test == None:
@@ -40,6 +42,9 @@ class Batch_Data:
         elif train == None:
             raise TrainDataMustBeSetError("Train percentage must be set for the validation or test data to be prepared.")
         self.dict_trainvaltest = {'train':1,'validate':2,'test':3}
+        self.str_train = 'train'
+        self.str_val = 'validate'
+        self.str_test = 'test'
         return self
     
     def get_datasets(self):
@@ -50,9 +55,6 @@ class Batch_Data:
         self.train_ipa = self.ipa[:self.rows_train]
         self.val_ipa = self.ipa[self.rows_train:self.rows_train+self.rows_val]
         self.test_ipa = self.ipa[self.rows_train+self.rows_val:self.rows_train+self.rows_val+self.rows_test]
-        self.str_train = 'train'
-        self.str_val = 'validate'
-        self.str_test = 'test'
         return (self.train_ipa,self.str_train), (self.val_ipa,self.str_val), (self.test_ipa,self.str_test)
 
 
@@ -87,7 +89,7 @@ class Batch_Data:
         self.ipa_window = ipa_window
         ipa_chars = []
         count = 0
-        for annotation in self.ipa[:,3]:
+        for annotation in self.ipa[:,3]: #3 refers to the column w ipa annotations
             for char in annotation:
                 count += 1
                 if char in ipa_chars:
@@ -196,4 +198,17 @@ class Batch_Data:
         for x in ipa_list:
             ipa_keys.append(list(self.dict_ipa.keys())[list(self.dict_ipa.values()).index(x)])
         return ipa_keys
+    
+    def get_num_features(self,df):
+        num_cols = len(df.columns)
+        # -1 stands for the 'dataset' column, the 'ipa_window' stands for the number of columns dedicated to the labels
+        num_features = num_cols - 1 - self.ipa_window
+        self.num_features = num_features
+        return self
+    
+    def get_x_y(self,df):
+        #plus 1 because of 'dataset' column at beginning
+        x = df.iloc[:,1:self.num_features+1].values
+        y = df.iloc[:,self.num_features+1:].values
+        return x,y
     

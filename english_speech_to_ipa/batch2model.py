@@ -70,10 +70,18 @@ if __name__=="__main__":
         
         dataset_matrices = [x_y_train,x_y_val,x_y_test]
         for dataset in dataset_matrices:
-            print("Shape of input: {}".format(dataset[0].shape))
-            print(dataset[0])
-            print("Shape of output: {}".format(dataset[1].shape))
-            print(dataset[1])
+            print("Shape of input 2d: {}".format(dataset[0].shape))
+            #print(dataset[0])
+            print("Shape of output 2d: {}".format(dataset[1].shape))
+            #print(dataset[1])
+            
+        #prep data for LSTM
+        #make 3d
+        for dataset in dataset_matrices:
+            input3d = batch_prep.make2d_3d(dataset[0])
+            output3d = batch_prep.make2d_3d(dataset[1])
+            print("Shape of input 3d: {}".format(input3d.shape))
+            print("Shape of output 3d: {}".format(output3d.shape))
     
         prog_end = time.time()
         logging.info("Program ended: {}".format(prog_end))

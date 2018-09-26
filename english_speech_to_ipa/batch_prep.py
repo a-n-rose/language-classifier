@@ -212,3 +212,9 @@ class Batch_Data:
         y = df.iloc[:,self.num_features+1:].values
         return x,y
     
+    def make2d_3d(self,matrix):
+        new_rows = len(matrix)//self.batch_size
+        cols = matrix.shape[1]
+        data_3d = matrix.reshape(new_rows,self.batch_size,cols)
+        return data_3d
+    

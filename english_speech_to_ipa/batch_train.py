@@ -25,21 +25,20 @@ if __name__=="__main__":
     prog_start = time.time()
     logging.info(prog_start)
     
-    database = 'speech_wnoise_ipa_mfcc3.db'
-    table_ipa = 'speech_ipa16'
-    table_mfcc = 'speech_mfcc16'
+    database = 'speech_wnoise_ipa_mfcc.db'
+    table_ipa = 'speech_as_ipa'
+    table_mfcc = 'speech_as_mfcc'
     #table where combined datasets will be saved
-    table_final = 'english_40mfcc_3ipa_datasetbatches3'
+    table_final = 'english_40mfcc_ipawindow3_ipashift3_datasets20batches'
     db = Connect_db(database,table_ipa,table_mfcc,table_final)
 
     
 
     logging.info("Database where data is pulled from: {}".format(database))
+    logging.info("Data saved in table: {}".format(table_final))
 
     try:
         data_ipa = db.sqldata2df(db.table_ipa,limit=1000000)
-        
-        
         
         logging.info("Loaded data from table {}".format(table_ipa))
         data_mfcc = db.sqldata2df(db.table_mfcc,limit=1000000)

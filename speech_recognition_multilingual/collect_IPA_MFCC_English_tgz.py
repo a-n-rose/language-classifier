@@ -38,7 +38,7 @@ if __name__ == '__main__':
     try:
         #check variables:
         print("The purpose of this script is: {}".format(script_purpose))
-        print("The database name used is: {}".format(database))
+        print("The database name to save data is: {}".format(database))
         print("The tablename(s) is/are: {}".format(", ".join(tablename_list)))
         print("The columns include: {}".format(tablecols_list))
         print("Background noise: {}".format(noisefile))
@@ -81,6 +81,6 @@ if __name__ == '__main__':
     except Error as e:
         logging.error("Database error occurred: {}".format(e))
     finally:
-        if speech_data.conn:
-            speech_data.conn.close()
+        if spdata.conn:
+            spdata.conn.close()
             print("Database has been closed.")

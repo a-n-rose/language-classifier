@@ -6,13 +6,15 @@ import sqlite3
 from Errors import Error, DatabaseLimitError
 
 class Connect_db:
-    def __init__(self,database,tablename):
+    def __init__(self,database,tablename_ipa,tablename_mfcc,tablename_final):
         self.database = database
-        self.table = tablename
+        self.table_ipa = tablename_ipa
+        self.table_mfcc = tablename_mfcc
+        self.table_final = tablename_final
         self.conn = sqlite3.connect(database)
         self.c = self.conn.cursor()
 
-    def sqldata2df(self,column_value_list=None,limit=None,row_start=None):
+    def sqldata2df(self,tablename,column_value_list=None,limit=None,row_start=None):
         col_val = []
         if column_value_list:
             extra = " WHERE"
@@ -34,7 +36,7 @@ class Connect_db:
         elif row_start:
             raise DatabaseLimitError("\nLimitMissingError: Need a LIMIT value in order to specify a ROWSTART value.\n")
             
-        msg = ''' SELECT * FROM {}{} %s'''.format(self.table,extra) % (" AND ".join(col_val))
+        msg = ''' SELECT * FROM {}{} %s'''.format(tablename,extra) % (" AND ".join(col_val))
         self.c.execute(msg)
         data = self.c.fetchall()
         df = pd.DataFrame(data)
@@ -46,7 +48,7 @@ class Connect_db:
         column_type = []
         for i in columns:
             column_type.append('"'+str(i)+'" real')
-        msg = '''CREATE TABLE IF NOT EXISTS {}("dataset" int, %s)'''.format(self.table) % ", ".join(column_type)
+        msg = '''CREATE TABLE IF NOT EXISTS {}("dataset" int, %s)'''.format(self.table_final) % ", ".join(column_type)
         self.c.execute(msg)
         self.conn.commit()
         return None
@@ -62,7 +64,7 @@ class Connect_db:
                     col_var+=' ?,'
                 else:
                     col_var+=' ?'
-            msg = '''INSERT INTO {} VALUES (%s) '''.format(self.table) % col_var
+            msg = '''INSERT INTO {} VALUES (%s) '''.format(self.table_final) % col_var
             self.c.executemany(msg,x)
             self.conn.commit()
         return None

@@ -7,7 +7,7 @@ from sqlite3 import Error
 from sql_data import Connect_db
 from batch_prep import Batch_Data
 
-from Errors import Error, DatabaseLimitError, ValidateDataRequiresTestDataError, ShiftLargerThanWindowError, TrainDataMustBeSetError, EmptyDataSetError
+from Errors import Error, DatabaseLimitError, ValidateDataRequiresTestDataError, ShiftLargerThanWindowError, TrainDataMustBeSetError, EmptyDataSetError, MFCCdataNotFoundError
 
 
 #needed for logging 
@@ -25,27 +25,25 @@ if __name__=="__main__":
     prog_start = time.time()
     logging.info(prog_start)
     
-    database_ipa = 'speech2IPA3.db'
-    table_ipa = 'speech2ipa'
-    ipa = Connect_db(database_ipa,table_ipa)
+    database = 'speech_wnoise_ipa_mfcc3.db'
+    table_ipa = 'speech_ipa16'
+    table_mfcc = 'speech_mfcc16'
+    #table where combined datasets will be saved
+    table_final = 'english_40mfcc_3ipa_datasetbatches3'
+    db = Connect_db(database,table_ipa,table_mfcc,table_final)
 
-    database_mfcc = 'sp_mfcc_IPA3.db'
-    table_mfcc = 'mfcc_40'
-    mfcc = Connect_db(database_mfcc, table_mfcc)
+    
 
-    #to save the collected datasets:
-    database_final = 'batchdata_mfcc_ipa_datasets5.db'
-    table_final = 'english'
-    final = Connect_db(database_final,table_final)
+    logging.info("Database where data is pulled from: {}".format(database))
 
-    logging.info("Database for IPA Annotations: {}".format(database_ipa))
-    logging.info("Database for MFCC features: {}".format(database_mfcc))
-    logging.info("Database where new dataset is saved: {}".format(database_final))
     try:
-        data_ipa = ipa.sqldata2df(limit=1000000)
-        logging.info("Loaded data from {}".format(database_ipa))
-        data_mfcc = mfcc.sqldata2df(limit=1000000)
-        logging.info("Loaded data from {}".format(database_mfcc))
+        data_ipa = db.sqldata2df(db.table_ipa,limit=1000000)
+        
+        
+        
+        logging.info("Loaded data from table {}".format(table_ipa))
+        data_mfcc = db.sqldata2df(db.table_mfcc,limit=1000000)
+        logging.info("Loaded data from {}".format(db.table_mfcc))
 
         x_ipa = data_ipa.values
         x_mfcc = data_mfcc.values
@@ -85,7 +83,7 @@ if __name__=="__main__":
                 batch_row, total_row_batches = batch_prep.generate_batch(row,batch_item[1])
                 logging.info("Completed batch of row {}".format(count2))
                 logging.info("Now saving data to database.")
-                final.databatch2sql(batch_row)
+                db.databatch2sql(batch_row)
                 percent_thru = "Data successfully saved. {}% Through dataset {} of {}".format(count2/len(batch_item[0])*100,count,len(ipa_datasets))
                 print(percent_thru)
                 logging.info(percent_thru)
@@ -107,16 +105,22 @@ if __name__=="__main__":
         logging.error("Error occurred: {}".format(e))
     except KeyError as e:
         logging.error("Error occurred: {}".format(e))
+    except MFCCdataNotFoundError as e:
+        logging.error("Error occurred: {}".format(e))
     except Error as e:
         logging.error("Database error: {}".format(e))
+    except SystemExit:
+        logging.error("Had to exit program early.")
     #Close database connections:
     finally:
-        ipa.close_conn()
-        mfcc.close_conn()
-        final.close_conn()
-        logging.info("databases {}, {}, {} successfully closed.".format(database_ipa,database_mfcc,database_mfcc))
+        db.close_conn()
+        logging.info("database {} successfully closed.".format(database))
 
 
 '''
+ToDo: 
+1) improve status bar
+* https://stackoverflow.com/questions/3002085/python-to-print-out-status-bar-and-percentage
+
 Question I have: would it make a difference if ipa stress markers were included? 
 '''

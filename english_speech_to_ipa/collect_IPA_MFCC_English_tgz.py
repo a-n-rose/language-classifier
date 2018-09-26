@@ -22,8 +22,8 @@ session_name = get_date() #make sure this session has a unique identifier - link
 #global variables:
 database='speech_wnoise_ipa_mfcc3.db'
 noisefile = 'background_noise_poor_recording.wav'#options: None 'somewavefile.wav'
-tablename_annotations = 'speech_ipa15'
-tablename_mfcc = 'speech_mfcc15'
+tablename_annotations = 'speech_ipa16'
+tablename_mfcc = 'speech_mfcc16'
 tablename_list = [tablename_annotations,tablename_mfcc]
 
 # parent table

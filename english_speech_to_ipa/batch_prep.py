@@ -6,12 +6,11 @@ ToDo:
 
 import numpy as np
 import pandas as pd
-import config
 from pathlib import Path
 import time
 import itertools
 
-from Errors import Error, ValidateDataRequiresTestDataError, ShiftLargerThanWindowError, TrainDataMustBeSetError, EmptyDataSetError
+from Errors import Error, ValidateDataRequiresTestDataError, ShiftLargerThanWindowError, TrainDataMustBeSetError, EmptyDataSetError, MFCCdataNotFoundError
 
 class Batch_Data:
     def __init__(self,data_ipa,data_mfcc):
@@ -67,11 +66,6 @@ class Batch_Data:
             newstring.remove("\n")
         return newstring
 
-    def get_tgz_name(self,path,wav):
-        path_split = Path(path).name
-        tgz_name = "{}.tgz_{}".format(path_split,wav)
-        return tgz_name
-
     def build_ipa_dict(self,ipa_list):
         dict_ipa = dict()
         for num in range(len(ipa_list)):
@@ -120,6 +114,12 @@ class Batch_Data:
         label_int = self.dict_trainvaltest[label_str]
         return label_int
 
+    def get_tgz_name(self,path,wav):
+        #path = path[1:-1]
+        #path_split = Path(path).name
+        tgz_name = "{}_{}".format(path,wav)
+        return tgz_name
+
     def generate_batch(self,ipa_dataset_row,dataset_label):
         if len(ipa_dataset_row)<1:
             raise EmptyDataSetError("The provided dataset row is empty.")
@@ -134,9 +134,10 @@ class Batch_Data:
         annotation_ipa = self.remove_spaces_endofline(ipa[3])
         num_ipa = len(annotation_ipa)
         mfcc_id = self.get_tgz_name(recording_session,wavefile)
-        
         #get mfcc data, and align w ipa data
         mfcc_indices = np.where(self.mfcc[:,40]==mfcc_id)
+        if len(mfcc_indices[0]) == 0:
+            raise MFCCdataNotFoundError("No MFCC data found that matches the session ID.")
         mfcc = self.mfcc[mfcc_indices,:40]
         
         mfcc = mfcc.reshape(mfcc.shape[1],mfcc.shape[2])

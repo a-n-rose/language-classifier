@@ -88,14 +88,13 @@ if __name__=="__main__":
             dataset[1] = batch_prep.normalize_data(dataset[1])
     
         #feature scaling
-
         sc = StandardScaler()
         x_y_train[0] = sc.fit_transform(x_y_train[0])
         x_y_val[0] = sc.transform(x_y_val[0])
         x_y_test[0] = sc.transform(x_y_test[0])
 
         
-        #make 3d
+        #make data 3d (feeding data in sequences of 'batch_size')
         for dataset in dataset_matrices:
             input3d = batch_prep.make2d_3d(dataset[0])
             output3d = batch_prep.make2d_3d(dataset[1])
@@ -110,18 +109,46 @@ if __name__=="__main__":
         y_test = batch_prep.make2d_3d(x_y_test[1])
 
 
-        #categorical data for multiple classes:
-
+        #categorical data for multiple classes
+        #num classes based on number of possible 3-letter combinations of all ipa characters
         y_train = keras.utils.to_categorical(y_train, num_classes=batch_prep.num_classes)
         y_val = keras.utils.to_categorical(y_val, num_classes=batch_prep.num_classes)
         y_test = keras.utils.to_categorical(y_test, num_classes=batch_prep.num_classes)
         
+        input_dim = X_train.shape[2]
         
-        prog_end = time.time()
-        logging.info("Program ended: {}".format(prog_end))
+        #Build Model:
+        model = Sequential()
+        model.add(LSTM(100, return_sequences=True,input_shape=(self.batch_size,input_dim)))
+        model.add(LSTM(100, return_sequences=True))
+        model.add(Flatten())
+        model.add(Dense(self.num_classes,activation='softmax'))
+        #model.add(TimeDistributed(Dense(self.num_classes)))
+        #model.add(Activation('softmax'))
+        
+        model.compile(loss='categorical_crossentropy',optimizer='adam',metics=['categorical_accuracy'])
+        
+        #numbers: batchsize and epochs
+        model.fit(X_train,y_train,batchsize,epochs)
+        
+        
+        score = model.evaluate(X_test,y_test,verbose=0)
+        acc = "%s: %.2f%%" % (model.metrics_names[1], score[1]*100)
+        print("Model Accuracy:")
+        print(acc)
+        logging.info("Model Accuracy: {}".format(acc))
+        
+        print('Saving Model')
+        date = get_date()
+        model_name = 'engspeech2ipa_{}'.format(date)
+        model_json = model.to_json()
+        with open(modelname+'.json','w') as json_file:
+            json_file.write(model_json)
+        model.save_weights(modelname+'.h5')
+        print('Done!')
         elapsed_time_hours = (time.time()-prog_start)/3600
         timepassed_message = 'Elapsed time in hours: {}'.format(elapsed_time_hours)
-        logging.info(timepassed_message)
+        
 
     except DatabaseLimitError as e:
         logging.error("Error occurred: {}".format(e))

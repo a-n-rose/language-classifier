@@ -109,11 +109,11 @@ if __name__=="__main__":
         
         #Build Model:
         model = Sequential()
-        model.add(LSTM(100, return_sequences=True,input_shape=(self.batch_size,input_dim)))
+        model.add(LSTM(100, return_sequences=True,input_shape=(batch_prep.batch_size,input_dim)))
         model.add(LSTM(100, return_sequences=True))
         model.add(Flatten())
-        model.add(Dense(self.num_classes,activation='softmax'))
-        #model.add(TimeDistributed(Dense(self.num_classes)))
+        model.add(Dense(batch_prep.num_classes,activation='softmax'))
+        #model.add(TimeDistributed(Dense(batch_prep.num_classes)))
         #model.add(Activation('softmax'))
         
         model.compile(loss='categorical_crossentropy',optimizer='adam',metics=['categorical_accuracy'])

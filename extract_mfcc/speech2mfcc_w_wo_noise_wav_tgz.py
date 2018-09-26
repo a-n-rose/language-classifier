@@ -23,13 +23,11 @@ import shutil
 import sqlite3
 from sqlite3 import Error
 from pathlib import Path
-import time
 import random
 
 import prep_noise as prep_data
 
-from pympler import tracker
-
+import time
 import logging.handlers
 from my_logger import start_logging, get_date
 #for logging:
@@ -40,10 +38,10 @@ session_name = get_date() #make sure this session has a unique identifier - link
 
 
 #global variables
-database = 'sp_mfcc.db'
-noisegroup = 'none' # Options: 'matched' 'none' 'random'
+database = 'sp_mfcc_VAD.db'
+noisegroup = 'matched_VAD' # Options: 'matched' 'none' 'random'
 #if no noise, environment_noise = None; otherwise, put name of wavefile here
-environment_noise = None #Options: None or wavefile i.e. 'background_noise.wav'  
+environment_noise = 'background_noise_poor_recording.wav' #Options: None or wavefile i.e. 'background_noise.wav'  
 #specify number of mfccs --> reflects the number of columns
 #this needs to match the others in the database, therefore should be changed with caution
 num_mfcc = 40
@@ -128,7 +126,7 @@ def insert_data(filename,feature, sr, noise_scale,dataset_group,label):
 
 if __name__ == '__main__':
     try:
-        tr_tot = tracker.SummaryTracker()
+        
         start_logging(script_purpose)
         prog_start = time.time()
         logging.info(prog_start)
@@ -193,7 +191,7 @@ if __name__ == '__main__':
                         wav = wavefiles[v]
                         feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
                         filename = Path(wav).name
-                        insert_data(filename,feature, sr, noise_scale,dataset_group,label)
+                        insert_data(wav,feature, sr, noise_scale,dataset_group,label)
                         conn.commit()
                         
                         update = "\nProgress: \nwavefile {} ({} out of {})".format(filename,v+1,len(wavefiles))
@@ -220,6 +218,7 @@ if __name__ == '__main__':
                     for t in range(len(tgz_list)):
                         #assigns zipfile to train, validate, or train dataset (1,2,3 respectively)
                         #does expect each speaker to have only 1 zipfile/an entire zipfile to be dedicated to only 1 speaker
+                        tgz_name = tgz_list[t]
                         dataset_group = random.choice([1,1,1,1,1,1,1,2,2,2,3,3,3])
                         extract(tgz_list[t], extract_path = '/tmp/audio')
                         filename = os.path.splitext(tgz_list[t])[0]
@@ -231,7 +230,7 @@ if __name__ == '__main__':
                                 wav = waves_list[k]
                                 feature,sr,noise_scale = parser(wav, num_mfcc,env_noise)
                                 wav_name = str(Path(wav).name)
-                                insert_data(filename+'_'+wav,feature, sr, noise_scale,dataset_group,label)
+                                insert_data(tgz_name+'_'+wav_name,feature, sr, noise_scale,dataset_group,label)
                                 conn.commit()
                                 
                                 update = "\nProgress: \nwavefile {} ({} out of {})\ntgz file {} ({} out of {})".format(wav_name,k+1,len(waves_list),filename,t+1,len(tgz_list))
@@ -277,7 +276,7 @@ if __name__ == '__main__':
             print_message = "\nRun the script after you correct the global variables within the script."
             print(print_message)
             logging.info(print_message)
-    except sqlite3.Error as e:
+    except Error as e:
         logging.exception("Database error: %s" % e)
     except Exception as e:
         logging.exception("Error occurred: %s" % e)

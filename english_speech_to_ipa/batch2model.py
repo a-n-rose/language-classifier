@@ -7,6 +7,11 @@ from sqlite3 import Error
 from sql_data import Connect_db
 from batch_prep import Batch_Data
 
+from sklearn.preprocessing import StandardScaler
+import keras
+from keras.models import Sequential
+from keras.layers import Dense, LSTM, Flatten
+
 from Errors import Error, DatabaseLimitError, ValidateDataRequiresTestDataError, ShiftLargerThanWindowError, TrainDataMustBeSetError, EmptyDataSetError, MFCCdataNotFoundError
 
 
@@ -76,13 +81,42 @@ if __name__=="__main__":
             #print(dataset[1])
             
         #prep data for LSTM
+        
+        #first normalize data
+        for dataset in dataset_matrices:
+            dataset[0] = batch_prep.normalize_data(dataset[0])
+            dataset[1] = batch_prep.normalize_data(dataset[1])
+    
+        #feature scaling
+
+        sc = StandardScaler()
+        x_y_train[0] = sc.fit_transform(x_y_train[0])
+        x_y_val[0] = sc.transform(x_y_val[0])
+        x_y_test[0] = sc.transform(x_y_test[0])
+
+        
         #make 3d
         for dataset in dataset_matrices:
             input3d = batch_prep.make2d_3d(dataset[0])
             output3d = batch_prep.make2d_3d(dataset[1])
             print("Shape of input 3d: {}".format(input3d.shape))
             print("Shape of output 3d: {}".format(output3d.shape))
-    
+            
+        X_train = batch_prep.make2d_3d(x_y_train[0])
+        y_train = batch_prep.make2d_3d(x_y_train[1])
+        X_val = batch_prep.make2d_3d(x_y_val[0])
+        y_val = batch_prep.make2d_3d(x_y_val[1])
+        X_test = batch_prep.make2d_3d(x_y_test[0])
+        y_test = batch_prep.make2d_3d(x_y_test[1])
+
+
+        #categorical data for multiple classes:
+
+        y_train = keras.utils.to_categorical(y_train, num_classes=batch_prep.num_classes)
+        y_val = keras.utils.to_categorical(y_val, num_classes=batch_prep.num_classes)
+        y_test = keras.utils.to_categorical(y_test, num_classes=batch_prep.num_classes)
+        
+        
         prog_end = time.time()
         logging.info("Program ended: {}".format(prog_end))
         elapsed_time_hours = (time.time()-prog_start)/3600

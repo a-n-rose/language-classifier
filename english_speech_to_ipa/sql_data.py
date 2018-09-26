@@ -19,8 +19,8 @@ class Connect_db:
         if column_value_list:
             extra = " WHERE"
             for item in column_value_list:
-                item[1] = "'{}'".format(item[1])
-                col_val.append('='.join(map(str, item)))
+                value = "'{}'".format(item[1])
+                col_val.append('='.join(map(str, [item[0],value])))
         else:
             extra = ""
         if limit and row_start:
@@ -68,6 +68,7 @@ class Connect_db:
             self.c.executemany(msg,x)
             self.conn.commit()
         return None
+        
     
     def close_conn(self):
         if self.conn:

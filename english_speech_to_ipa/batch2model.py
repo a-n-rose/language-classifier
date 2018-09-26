@@ -73,33 +73,23 @@ if __name__=="__main__":
         x_y_val = batch_prep.get_x_y(df_val)
         x_y_test = batch_prep.get_x_y(df_test)
         
-        dataset_matrices = [x_y_train,x_y_val,x_y_test]
-        for dataset in dataset_matrices:
-            print("Shape of input 2d: {}".format(dataset[0].shape))
-            #print(dataset[0])
-            print("Shape of output 2d: {}".format(dataset[1].shape))
-            #print(dataset[1])
-            
         #prep data for LSTM
         
-        #first normalize data
-        for dataset in dataset_matrices:
-            dataset[0] = batch_prep.normalize_data(dataset[0])
-            dataset[1] = batch_prep.normalize_data(dataset[1])
+        #first normalize data    
+        X_train = batch_prep.normalize_data(x_y_train[0])
+        y_train = batch_prep.normalize_data(x_y_train[1])
+        X_val = batch_prep.normalize_data(x_y_val[0])
+        y_val = batch_prep.normalize_data(x_y_val[1])
+        X_test = batch_prep.normalize_data(x_y_test[0])
+        y_test = batch_prep.normalize_data(x_y_test[1])
+    
     
         #feature scaling
         sc = StandardScaler()
-        x_y_train[0] = sc.fit_transform(x_y_train[0])
-        x_y_val[0] = sc.transform(x_y_val[0])
-        x_y_test[0] = sc.transform(x_y_test[0])
+        X_train = sc.fit_transform(X_train)
+        X_val = sc.transform(X_val)
+        X_test = sc.transform(X_test)
 
-        
-        #make data 3d (feeding data in sequences of 'batch_size')
-        for dataset in dataset_matrices:
-            input3d = batch_prep.make2d_3d(dataset[0])
-            output3d = batch_prep.make2d_3d(dataset[1])
-            print("Shape of input 3d: {}".format(input3d.shape))
-            print("Shape of output 3d: {}".format(output3d.shape))
             
         X_train = batch_prep.make2d_3d(x_y_train[0])
         y_train = batch_prep.make2d_3d(x_y_train[1])

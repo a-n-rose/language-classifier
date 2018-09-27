@@ -128,11 +128,12 @@ if __name__=="__main__":
         
         print("Num Classes in \n~ train data: {} \n~ validation data: {} \n~ test data: {}".format(y_train_num_classes,y_val_num_classes,y_test_num_classes))
         
-        y_train = keras.utils.to_categorical(y_train, num_classes_total)
-        y_val = keras.utils.to_categorical(y_val, num_classes_total)
-        y_test = keras.utils.to_categorical(y_test, num_classes_total)
-        print(X_train.shape)
-        print(y_train.shape)
+        #memory error
+        #y_train = keras.utils.to_categorical(y_train, num_classes_total)
+        #y_val = keras.utils.to_categorical(y_val, num_classes_total)
+        #y_test = keras.utils.to_categorical(y_test, num_classes_total)
+        #print(X_train.shape)
+        #print(y_train.shape)
         
         input_dim = X_train.shape[2]
         input_num = X_train.shape[1]
@@ -150,7 +151,7 @@ if __name__=="__main__":
         
         #hidden layer: 40 * 2
         model = Sequential()
-        model.add(Embedding(num_classes, bp.num_features, input_length=bp.batch_size))
+        #model.add(Embedding(num_classes, bp.num_features, input_length=bp.batch_size))
         model.add(LSTM(80,return_sequences=True,input_shape=(bp.batch_size,input_dim)))
         model.add(Dropout(0.2))
         
@@ -161,12 +162,13 @@ if __name__=="__main__":
         model.add(Dropout(0.2))
         
         #model.add(Flatten())
-        model.add(Dense(units=num_classes_test))
-        
+        model.add(Dense(num_classes_total))
         model.add(Activation('softmax'))
         
         
-        model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metics=['accuracy'])
+        #model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metics=['accuracy'])
+        #in order to avoid memory error problem when assigning one-hot-encoded values
+        model.compile(loss='sparse_categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
         
         #batchsize: 80 * 2
         #numbers: batchsize and epochs

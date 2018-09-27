@@ -62,7 +62,7 @@ if __name__=="__main__":
         logging.info("\n\nIPA characters existent in dataset: \n{}\n\n".format(ipa_list))
         logging.info("Number of total classes: {}".format(num_classes))
         print("Number of total classes: {}".format(num_classes))
-        print(bp.classes)
+        #print(bp.classes)
         
         #get train data:
         df_train = db.sqldata2df(table_final,column_value_list=[['dataset',train_label]])
@@ -93,7 +93,7 @@ if __name__=="__main__":
         X_test = sc.transform(X_test)
 
             
-        #I want to merge the three columns together in the y datasets
+        #For LSTM, make 3d (numrows,batch_size(i.e. num of sequences bp.batch_size),num_features)
         X_train = bp.make2d_3d(x_y_train[0])
         y_train = bp.make2d_3d(x_y_train[1])
         X_val = bp.make2d_3d(x_y_val[0])
@@ -104,7 +104,6 @@ if __name__=="__main__":
 
         #categorical data for multiple classes
         #num classes based on number of possible 3-letter combinations of all ipa characters
-        #num_classes_test = set(y_train[2])
         num_classes = bp.num_classes
         
         
@@ -113,17 +112,23 @@ if __name__=="__main__":
         
         
         
-        #print("Y shape: ",y_train.shape)
-        #print(y_train[:,:,0])
-        #print(len(y_train[:,:,0]))
-        #print(type(y_train[:,:,0]))
-        #labels = y_train[:,:,0]
-        #labels_unique = set(labels)
-        #print("Unique labels: {}".format(len(labels_unique)))
+        print("Y shape: ",y_train.shape)
+        print(y_train[:,:,0])
+        print(len(y_train[:,:,0]))
+        print(type(y_train[:,:,0]))
+        print(y_train[0,0,:])
         
-        y_train = keras.utils.to_categorical(y_train, num_classes=num_classes)
-        y_val = keras.utils.to_categorical(y_val, num_classes=num_classes)
-        y_test = keras.utils.to_categorical(y_test, num_classes=num_classes)
+        
+        #do I need to first see which classes are in the y data?
+        y_train_num_classes = bp.classes_present(y_train)
+        y_val_num_classes = bp.classes_present(y_val)
+        y_test_num_classes = bp.classes_present(y_test)
+        
+        print("Num Classes in \n~ train data: {} \n~ validation data: {} \n~ test data: {}".format(y_train_num_classes,y_val_num_classes,y_test_num_classes))
+        
+        y_train = keras.utils.to_categorical(y_train, y_train_num_classes)
+        y_val = keras.utils.to_categorical(y_val, y_val_num_classes)
+        y_test = keras.utils.to_categorical(y_test, y_test_num_classes)
         print(X_train.shape)
         print(y_train.shape)
         

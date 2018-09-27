@@ -255,3 +255,14 @@ class Batch_Data:
         std = np.std(matrix,axis=0)
         matrix = (matrix-mean)/std
         return matrix
+    
+    def classes_present(self,y_data):
+        y_classes = []
+        for class_list in y_data[:,:,0]:
+            #searches thru class label of each batch of MFCC sequences (self.batch_size)
+            for class_item in class_list: #should be a series of IPA labels (e.g. 223,223,223,223) and ending with zeros (0,0,0); for each class_item (the IPA lable should be the same, except for the trailing zeros, for each class_item --> they are getting labeled as the same set of IPA characters)
+                if class_item in y_classes:
+                    pass
+                else:
+                    y_classes.append(class_item)
+        return len(y_classes)

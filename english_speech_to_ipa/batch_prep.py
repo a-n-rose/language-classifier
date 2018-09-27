@@ -101,6 +101,8 @@ class Batch_Data:
         return num_int
 
     def doc_ipa_present(self,ipa_window,ipa_shift):
+        if ipa_shift > ipa_window:
+            raise ShiftLargerThanWindowError("The shift cannot exceed the size of the window of IPA characters.")
         self.ipa_window = ipa_window
         self.ipa_shift = ipa_shift
         ipa_chars = []
@@ -146,8 +148,6 @@ class Batch_Data:
     def generate_batch(self,ipa_dataset_row,dataset_label):
         if len(ipa_dataset_row)<1:
             raise EmptyDataSetError("The provided dataset row is empty.")
-        if self.ipa_shift > self.ipa_window:
-            raise ShiftLargerThanWindowError("The shift cannot exceed the size of the window of IPA characters.")
         #get dataset value to apply to data
         dataset_label_int = self.get_dataset_value(dataset_label)
         #get annotation data for output label

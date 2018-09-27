@@ -153,7 +153,7 @@ class Batch_Data:
     def align_list(self,items_list):
         window_shift_diff = self.ipa_window - self.ipa_shift
         adjust_list_len = len(items_list) - window_shift_diff
-        extra = adjust_list_len % window_shift
+        extra = adjust_list_len % self.ipa_shift
         new_list_len = len(items_list) - extra
         new_list = items_list[:new_list_len]
         return new_list,len(new_list)
@@ -208,10 +208,11 @@ class Batch_Data:
                 end = len(mfcc)
             index_ipa = batch_iter * self.ipa_shift
             ipa_label = annotation_ipa[index_ipa:index_ipa+self.ipa_window]
-            ipa_ints = self.list2int(ipa_label)
+            print(ipa_label)
+            #ipa_ints = self.list2int(ipa_label)
             batch_input = mfcc[start:end,:]
             len_mfccs = len(batch_input)
-            add_ints = np.repeat([ipa_ints],len_mfccs,axis=0)
+            add_label = np.repeat([ipa_label],len_mfccs,axis=0)
             if batch_input.shape[0] < self.batch_size:
                 diff = self.batch_size - batch_input.shape[0]
                 pad_zeros = np.zeros(shape=(diff,batch_input.shape[1]))
@@ -264,5 +265,6 @@ class Batch_Data:
                 if class_item in y_classes:
                     pass
                 else:
+                    #print(class_item)
                     y_classes.append(class_item)
         return len(y_classes)

@@ -10,7 +10,7 @@ from batch_prep import Batch_Data
 from sklearn.preprocessing import StandardScaler
 import keras
 from keras.models import Sequential
-from keras.layers import Dense, LSTM, Flatten
+from keras.layers import Dense, LSTM, Flatten, Embedding, TimeDistributed, Activation, Dropout
 
 from Errors import Error, DatabaseLimitError, ValidateDataRequiresTestDataError, ShiftLargerThanWindowError, TrainDataMustBeSetError, EmptyDataSetError, MFCCdataNotFoundError
 
@@ -34,7 +34,7 @@ if __name__=="__main__":
     table_ipa = 'speech_as_ipa'
     table_mfcc = 'speech_as_mfcc'
     #table where combined datasets will be saved
-    table_final = 'english_40mfcc_ipawindow3_ipashift3_datasets20batches'
+    table_final = 'english_40mfcc_ipawindow3_ipashift3_1label_datasets20batches'
     db = Connect_db(database,table_ipa,table_mfcc,table_final)
 
     logging.info("Database where data is pulled from: {}".format(database))
@@ -52,13 +52,17 @@ if __name__=="__main__":
         val_label = batch_prep.get_dataset_value(batch_prep.str_val)
         test_label = batch_prep.get_dataset_value(batch_prep.str_test)
         
-        #get IPA values (how many classes I have, ultimately)
+        #get IPA values given ipa window and shift (how many classes I have)        
         ipa_window = 3
-        _,num_classes = batch_prep.all_ipa_present(ipa_window)
+        window_shift = 3
+        ipa_list,num_classes = batch_prep.doc_ipa_present(ipa_window,window_shift)
         #define batches... just to be sure
         batch_size = 20
-        window_shift = 3
-        batch_prep.def_batch(batch_size,window_shift)
+        batch_prep.def_batch(batch_size)
+        logging.info("\n\nIPA characters existent in dataset: \n{}\n\n".format(ipa_list))
+        logging.info("Number of total classes: {}".format(num_classes))
+        print("Number of total classes: {}".format(num_classes))
+        print(batch_prep.classes)
         
         #get train data:
         df_train = db.sqldata2df(table_final,column_value_list=[['dataset',train_label]])
@@ -77,11 +81,8 @@ if __name__=="__main__":
         
         #first normalize data    
         X_train = batch_prep.normalize_data(x_y_train[0])
-        y_train = batch_prep.normalize_data(x_y_train[1])
         X_val = batch_prep.normalize_data(x_y_val[0])
-        y_val = batch_prep.normalize_data(x_y_val[1])
         X_test = batch_prep.normalize_data(x_y_test[0])
-        y_test = batch_prep.normalize_data(x_y_test[1])
     
     
         #feature scaling
@@ -91,6 +92,7 @@ if __name__=="__main__":
         X_test = sc.transform(X_test)
 
             
+        #I want to merge the three columns together in the y datasets
         X_train = batch_prep.make2d_3d(x_y_train[0])
         y_train = batch_prep.make2d_3d(x_y_train[1])
         X_val = batch_prep.make2d_3d(x_y_val[0])
@@ -101,25 +103,66 @@ if __name__=="__main__":
 
         #categorical data for multiple classes
         #num classes based on number of possible 3-letter combinations of all ipa characters
-        y_train = keras.utils.to_categorical(y_train, num_classes=batch_prep.num_classes)
-        y_val = keras.utils.to_categorical(y_val, num_classes=batch_prep.num_classes)
-        y_test = keras.utils.to_categorical(y_test, num_classes=batch_prep.num_classes)
+        #num_classes_test = set(y_train[2])
+        num_classes = batch_prep.num_classes
+        
+        
+        #need to figure out how to one-hot-encode the ipa labels
+        
+        
+        
+        
+        #print("Y shape: ",y_train.shape)
+        #print(y_train[:,:,0])
+        #print(len(y_train[:,:,0]))
+        #print(type(y_train[:,:,0]))
+        #labels = y_train[:,:,0]
+        #labels_unique = set(labels)
+        #print("Unique labels: {}".format(len(labels_unique)))
+        
+        y_train = keras.utils.to_categorical(y_train, num_classes=num_classes)
+        y_val = keras.utils.to_categorical(y_val, num_classes=num_classes)
+        y_test = keras.utils.to_categorical(y_test, num_classes=num_classes)
+        print(X_train.shape)
+        print(y_train.shape)
         
         input_dim = X_train.shape[2]
-        
+        input_num = X_train.shape[1]
+        vector = y_train.shape[0]
         #Build Model:
+        #model = Sequential()
+        #model.add(LSTM(40, return_sequences=True,input_shape=(batch_prep.batch_size,input_dim)))
+        #model.add(LSTM(40, return_sequences=True))
+        #model.add(Flatten())
+        #model.add(Flatten())
+        #units_layers = (input_dim+batch_prep.num_classes)//2
+        #model.add(Dense(units = units_layers,input_shape = (vector, batch_size, ipa_window, batch_prep.num_classes),activation='softmax'))
+        ##model.add(TimeDistributed(Dense(batch_prep.num_classes)))
+        ##model.add(Activation('softmax'))
+        
+        #hidden layer: 40 * 2
         model = Sequential()
-        model.add(LSTM(100, return_sequences=True,input_shape=(batch_prep.batch_size,input_dim)))
-        model.add(LSTM(100, return_sequences=True))
-        model.add(Flatten())
-        model.add(Dense(batch_prep.num_classes,activation='softmax'))
-        #model.add(TimeDistributed(Dense(batch_prep.num_classes)))
-        #model.add(Activation('softmax'))
+        model.add(Embedding(num_classes, batch_prep.num_features, input_length=batch_prep.batch_size))
+        model.add(LSTM(80,return_sequences=True,input_shape=(batch_prep.batch_size,input_dim)))
+        model.add(Dropout(0.2))
         
-        model.compile(loss='categorical_crossentropy',optimizer='adam',metics=['categorical_accuracy'])
+        model.add(LSTM(80,return_sequences=True))
+        model.add(Dropout(0.2))
         
+        model.add(LSTM(80,return_sequences=True))
+        model.add(Dropout(0.2))
+        
+        #model.add(Flatten())
+        model.add(Dense(units=num_classes_test))
+        
+        model.add(Activation('softmax'))
+        
+        
+        model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metics=['accuracy'])
+        
+        #batchsize: 80 * 2
         #numbers: batchsize and epochs
-        model.fit(X_train,y_train,10,50)
+        model.fit(X_train,y_train,epochs=50,batch_size=160,validation_data=(X_val,y_val))
         
         
         score = model.evaluate(X_test,y_test,verbose=0)

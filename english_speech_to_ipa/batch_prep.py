@@ -77,39 +77,60 @@ class Batch_Data:
         self.dict_ipa = dict_ipa
         return self
 
-    def get_num_classes(self,ipa_list):
-        self.poss_combinations = itertools.combinations(ipa_list, self.ipa_window)
-        count = 0
-        for i in self.poss_combinations:
-            count += 1
-        self.num_classes = count +1 #Final +1 accounts for the classification of [0,0,0], i.e. zero padded entries
-        return self
-    
-    def all_ipa_present(self,ipa_window):
-        self.ipa_window = ipa_window
-        ipa_chars = []
-        count = 0
-        for annotation in self.ipa[:,3]: #3 refers to the column w ipa annotations
-            for char in annotation:
-                count += 1
-                if char in ipa_chars:
-                    pass
-                else:
-                    ipa_chars.append(char)
-        ipa_chars = self.remove_spaces_endofline(ipa_chars)
-        self.build_ipa_dict(ipa_chars)
-        self.get_num_classes(ipa_chars)
-        return ipa_chars, self.num_classes
-            
+    #NOT EFFECTIVE!!!!
+    #def get_num_classes(self,ipa_list):
+        #self.poss_combinations = itertools.combinations(ipa_list, self.ipa_window)
+        #count = 0
+        #for i in self.poss_combinations:
+            #count += 1
+        #self.num_classes = count +1 #Final +1 accounts for the classification of [0,0,0], i.e. zero padded entries
+        #return self
+  
     def retrieve_ipa_vals(self,ipa_list):
         ipa_keys = []
         for char in ipa_list:
             ipa_keys.append(self.dict_ipa[char])
         return ipa_keys
-    
-    def def_batch(self,batch_size,ipa_shift):
-        self.batch_size = batch_size
+  
+    def list2int(self,ipa_list):
+        ipa_vals = self.retrieve_ipa_vals(ipa_list)
+        num_str = ""
+        for val in ipa_vals:
+            num_str+=str(val)
+        num_int = int(num_str)
+        return num_int
+
+    def doc_ipa_present(self,ipa_window,ipa_shift):
+        self.ipa_window = ipa_window
         self.ipa_shift = ipa_shift
+        ipa_chars = []
+        ipa_classes = []
+        count = 0
+        for annotation in self.ipa[:,3]: #3 refers to the column w ipa annotations
+            annotation = self.remove_spaces_endofline(annotation)
+            for char_idx in range(len(annotation)):
+                count += 1
+                if annotation[char_idx] in ipa_chars:
+                    pass
+                else:
+                    ipa_chars.append(annotation[char_idx])
+                if char_idx + ipa_shift < len(annotation):
+                    ipa_label = annotation[char_idx:char_idx+ipa_shift]
+                    #ipa_label = self.list2int(ipa_label)
+                    if ipa_label in ipa_classes:
+                        pass
+                    else:
+                        ipa_classes.append(ipa_label)
+        #NEED TO REMOVE UNWANTED CHARACTERS EARLIER TO IDENTIFY TOTAL CLASSES
+        #ipa_chars = self.remove_spaces_endofline(ipa_chars)
+        self.build_ipa_dict(ipa_chars)
+        self.num_classes = len(ipa_classes)
+        self.classes = ipa_classes
+        return ipa_chars, self.num_classes
+            
+        
+    def def_batch(self,batch_size):
+        self.batch_size = batch_size
         return self
     
     def get_dataset_value(self,label_str):
@@ -159,9 +180,8 @@ class Batch_Data:
             
         total_batches = int(num_ipa/self.ipa_shift - (self.ipa_window - self.ipa_shift))
         #create skeleton for where batches will be collected
-        #ipa window is added here for the classification info (i.e. how many ipa ids will be located here)
-        #also will include dataset label 
-        batch = np.zeros(shape=(total_batches,self.batch_size,num_features+self.ipa_window+1))
+        #1 is added for label column; another for dataset column
+        batch = np.zeros(shape=(total_batches,self.batch_size,num_features+1+1))
         
         for batch_iter in range(total_batches):
             start = batch_iter * (num_mfcc_per_ipa * self.ipa_shift) #shifting at indicated shift length (e.g. if ipa_shift = 1, then shift 1 letter at a time)
@@ -175,7 +195,7 @@ class Batch_Data:
                 end = len(mfcc)
             index_ipa = batch_iter * self.ipa_shift
             ipa_label = annotation_ipa[index_ipa:index_ipa+self.ipa_window]
-            ipa_ints = self.retrieve_ipa_vals(ipa_label)
+            ipa_ints = self.list2int(ipa_label)
             batch_input = mfcc[start:end,:]
             len_mfccs = len(batch_input)
             add_ints = np.repeat([ipa_ints],len_mfccs,axis=0)
@@ -183,8 +203,7 @@ class Batch_Data:
                 diff = self.batch_size - batch_input.shape[0]
                 pad_zeros = np.zeros(shape=(diff,batch_input.shape[1]))
                 batch_input = np.r_[batch_input,pad_zeros]
-                zero_list = np.zeros(shape=(self.ipa_window))
-                add_zeros = np.repeat([zero_list],diff,axis=0)
+                add_zeros = np.repeat([0],diff,axis=0)
                 add_ints = np.r_[add_ints,add_zeros]
             add_dataset_label = np.repeat([dataset_label_int],len(batch_input),axis=0)
             batch_input = np.c_[add_dataset_label,batch_input,add_ints]
@@ -201,8 +220,8 @@ class Batch_Data:
     
     def get_num_features(self,df):
         num_cols = len(df.columns)
-        # -1 stands for the 'dataset' column, the 'ipa_window' stands for the number of columns dedicated to the labels
-        num_features = num_cols - 1 - self.ipa_window
+        # -1 stands for the 'dataset' column, another 1 stands for the label column
+        num_features = num_cols - 1 - 1
         self.num_features = num_features
         return self
     

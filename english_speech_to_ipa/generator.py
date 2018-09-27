@@ -20,11 +20,11 @@ class KerasBatchGenerator(object):
         
         
     def generate(self):
-        x = np.zeros((self.batch_size,self.num_steps,self.num_features))
-        y = np.zeros((self.batch_size,self.num_steps,self.num_output_labels))
+        x = np.zeros((self.batch_size_model,self.num_steps,self.num_features))
+        y = np.zeros((self.batch_size_model,self.num_steps,self.num_output_labels))
         while True:
-            for i in range(self.batch_size):
-                if self.current_idx + self.batch_size >= len(self.data):
+            for i in range(self.batch_size_model):
+                if self.current_idx + self.batch_size_model >= len(self.data_x):
                     self.current_idx = 0
                 x[i,:,:] = self.data_x[self.current_idx:self.current_idx+self.num_steps]
                 temp_y = self.data_y[self.current_idx:self.current_idx+self.num_steps]

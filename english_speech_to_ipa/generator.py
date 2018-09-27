@@ -7,13 +7,12 @@ import numpy as np
 from keras.utils import to_categorical
 
 class KerasBatchGenerator(object):
-    def __init__(self,data_x,data_y,num_steps,batch_size_model,num_features,classes_total,num_output_labels,skip_step):
+    def __init__(self,data_x,data_y,num_steps,batch_size_model,num_features,num_output_labels,skip_step):
         self.data_x = data_x
         self.data_y = data_y
         self.num_steps = num_steps #number of sample sequences (i.e. 20 MFCC samples in a sequence --> 1 three-character-ipa label)
         self.batch_size_model = batch_size_model
         self.num_features = num_features
-        self.classes_total = classes_total
         self.num_output_labels = num_output_labels #right now: 1 label (a three character IPA label)
         self.current_idx = 0
         self.skip_step = skip_step

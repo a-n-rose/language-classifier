@@ -105,6 +105,11 @@ class Batch_Data:
             raise ShiftLargerThanWindowError("The shift cannot exceed the size of the window of IPA characters.")
         self.ipa_window = ipa_window
         self.ipa_shift = ipa_shift
+        #for documentation purposes... probs not necessary
+        if self.ipa_shift < self.ipa_window:
+            self.overlap = True
+        else:
+            self.overlap = False
         ipa_chars = []
         ipa_classes = []
         count = 0
@@ -144,6 +149,14 @@ class Batch_Data:
         #path_split = Path(path).name
         tgz_name = "{}_{}".format(path,wav)
         return tgz_name
+    
+    def align_list(self,items_list):
+        window_shift_diff = self.ipa_window - self.ipa_shift
+        adjust_list_len = len(items_list) - window_shift_diff
+        extra = adjust_list_len % window_shift
+        new_list_len = len(items_list) - extra
+        new_list = items_list[:new_list_len]
+        return new_list,len(new_list)
 
     def generate_batch(self,ipa_dataset_row,dataset_label):
         if len(ipa_dataset_row)<1:
@@ -162,21 +175,21 @@ class Batch_Data:
         if len(mfcc_indices[0]) == 0:
             raise MFCCdataNotFoundError("No MFCC data found that matches the session ID.")
         mfcc = self.mfcc[mfcc_indices,:40]
-        
+        #remove unnecessary 1st dimension. e.g. (1,230,40) --> (230,40)
         mfcc = mfcc.reshape(mfcc.shape[1],mfcc.shape[2])
-        num_mfcc = mfcc.shape[0]
-        num_features = mfcc.shape[1]
-        num_mfcc_per_ipa = num_mfcc//num_ipa
-        batch_mfcc = num_mfcc_per_ipa*3
+        
+        #ALIGNING SPEECH INFORMATION TO ANNOTATION
+        #WORKAROUND FOR NOT HAVING ALIGNED ANNOTATIONS
+        num_mfcc = mfcc.shape[0] #number of mfcc samples for the entire speech sample/annotation
+        num_features = mfcc.shape[1] #e.g. 40 MFCC features per MFCC sample
+        num_mfcc_per_ipa = num_mfcc//num_ipa #Loose alignment of MFCC samples to IPA character; work-around for not having aligned annotations
+        batch_mfcc = num_mfcc_per_ipa*3 #want to ID 3-character IPA label for the MFCC data corresponding to those 3 characters. Each batch contains num MFCC samples for 3 IPA characters (appx)
     
         #figure out how many batches of MFCC data I have for the total number of IPA chars
-        #do I want to overlap? Not right now..
-        overlap = False
+
         #make sure there is a total of 3 IPA characters (or the size of the window) per input (don't end up with with only 1 IPA character as classification sequence)
-        if overlap == False:   
-            num_ipa_diff = num_ipa % self.ipa_window
-            num_ipa -= num_ipa_diff
-            annotation_ipa = annotation_ipa[:num_ipa]
+        annotation_ipa,num_ipa = self.align_list(annotation_ipa)
+            
             
         total_batches = int(num_ipa/self.ipa_shift - (self.ipa_window - self.ipa_shift))
         #create skeleton for where batches will be collected
@@ -242,4 +255,3 @@ class Batch_Data:
         std = np.std(matrix,axis=0)
         matrix = (matrix-mean)/std
         return matrix
-    

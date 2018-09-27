@@ -135,7 +135,7 @@ if __name__=="__main__":
         
         batch_size_model = 20
         
-        train_data_generator = KerasBatchGenerator(X_train,y_train,num_steps=bp.batch_size,batch_size=20,num_features=bp.num_features,classes_total=bp.num_classes_total,num_output_labels=y_train.shape[2],skip_step=1)
+        train_data_generator = KerasBatchGenerator(X_train,y_train,num_steps=bp.batch_size,batch_size_model=20,num_features=bp.num_features,classes_total=bp.num_classes_total,num_output_labels=y_train.shape[2],skip_step=1)
         
         
         val_data_generator = KerasBatchGenerator(X_val,y_val,num_steps=bp.batch_size,batch_size_model=batch_size_model,num_features=bp.num_features,classes_total=bp.num_classes_total,num_output_labels=y_train.shape[2],skip_step=1)

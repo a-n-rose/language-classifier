@@ -1,8 +1,3 @@
-'''
-ToDo:
-1) find max num MFCCs per IPA character (probably 6-7) 
-'''
-
 
 import numpy as np
 import pandas as pd
@@ -58,14 +53,19 @@ class Batch_Data:
         return (self.train_ipa,self.str_train), (self.val_ipa,self.str_val), (self.test_ipa,self.str_test)
 
 
-    def remove_spaces_endofline(self,list_or_string):
+    def remove_spaces_etc(self,list_or_string):
+        if self.ipa_chars_only == True:
+            remove = [' ','\n','ˌ','ˈ','ː','̩']
+        else:
+            remove = [' ','\n']
         if isinstance(list_or_string,str):
-            newstring = list_or_string.replace(" ","")
-            newstring = newstring.replace("\n","")
+            newstring = list_or_string
+            for item in remove:
+                newstring = newstring.replace(item,"")
         elif isinstance(list_or_string,list):
             newstring = list_or_string.copy()
-            newstring.remove(" ")
-            newstring.remove("\n")
+            for item in remove:
+                newstring.remove(item)
         return newstring
 
     def build_ipa_dict(self):
@@ -76,15 +76,6 @@ class Batch_Data:
         dict_ipa[""] = 0
         self.dict_ipa = dict_ipa
         return self
-
-    #NOT EFFECTIVE!!!!
-    #def get_num_classes(self,ipa_list):
-        #self.poss_combinations = itertools.combinations(ipa_list, self.ipa_window)
-        #count = 0
-        #for i in self.poss_combinations:
-            #count += 1
-        #self.num_classes = count +1 #Final +1 accounts for the classification of [0,0,0], i.e. zero padded entries
-        #return self
   
     def retrieve_ipa_vals(self,ipa_list):
         ipa_keys = []
@@ -120,12 +111,13 @@ class Batch_Data:
         self.dict_classes = dict_classes
         return self
 
-    def doc_ipa_present(self,ipa_window,ipa_shift):
+    def doc_ipa_present(self,ipa_window,ipa_shift,ipa_chars_only=False):
         if ipa_shift > ipa_window:
             raise ShiftLargerThanWindowError("The shift cannot exceed the size of the window of IPA characters.")
         self.ipa_window = ipa_window
         self.ipa_shift = ipa_shift
         #for documentation purposes... probs not necessary
+        self.ipa_chars_only = ipa_chars_only
         if self.ipa_shift < self.ipa_window:
             self.overlap = True
         else:
@@ -134,7 +126,7 @@ class Batch_Data:
         ipa_classes = []
         count = 0
         for annotation in self.ipa[:,3]: #3 refers to the column w ipa annotations
-            annotation = self.remove_spaces_endofline(annotation)
+            annotation = self.remove_spaces_etc(annotation)
             for char_idx in range(len(annotation)):
                 count += 1
                 if annotation[char_idx] in ipa_chars:
@@ -194,7 +186,7 @@ class Batch_Data:
         ipa = ipa_dataset_row
         recording_session = ipa[0]
         wavefile = ipa[1]
-        annotation_ipa = self.remove_spaces_endofline(ipa[3])
+        annotation_ipa = self.remove_spaces_etc(ipa[3])
         num_ipa = len(annotation_ipa)
         mfcc_id = self.get_tgz_name(recording_session,wavefile)
         #get mfcc data, and align w ipa data

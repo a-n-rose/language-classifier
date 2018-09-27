@@ -34,7 +34,7 @@ if __name__=="__main__":
     table_ipa = 'speech_as_ipa'
     table_mfcc = 'speech_as_mfcc'
     #table where combined datasets will be saved
-    table_final = 'english_40mfcc_ipawindow3_ipashift3_1label_datasets20batches'
+    table_final = 'english_40mfcc_ipawindow3_ipashift3_1label_datasets20batches_idclasses'
     db = Connect_db(database,table_ipa,table_mfcc,table_final)
 
     logging.info("Database where data is pulled from: {}".format(database))
@@ -55,13 +55,15 @@ if __name__=="__main__":
         #get IPA values given ipa window and shift (how many classes I have)        
         ipa_window = 3
         window_shift = 3
-        ipa_list,num_classes = bp.doc_ipa_present(ipa_window,window_shift)
+        ipa_list,num_classes,num_classes_total = bp.doc_ipa_present(ipa_window,window_shift)
         #define batches... just to be sure
         batch_size = 20
         bp.def_batch(batch_size)
         logging.info("\n\nIPA characters existent in dataset: \n{}\n\n".format(ipa_list))
-        logging.info("Number of total classes: {}".format(num_classes))
-        print("Number of total classes: {}".format(num_classes))
+        logging.info("Number of local classes: {}".format(num_classes))
+        logging.info("Number of total possible classes: {}".format(num_classes_total))
+        print("Number of local classes: {}".format(num_classes))
+        print("Number of total possible classes: {}".format(num_classes_total))
         #print(bp.classes)
         
         #get train data:
@@ -104,7 +106,7 @@ if __name__=="__main__":
 
         #categorical data for multiple classes
         #num classes based on number of possible 3-letter combinations of all ipa characters
-        num_classes = bp.num_classes
+        num_classes = num_classes
         
         
         #need to figure out how to one-hot-encode the ipa labels
@@ -126,10 +128,9 @@ if __name__=="__main__":
         
         print("Num Classes in \n~ train data: {} \n~ validation data: {} \n~ test data: {}".format(y_train_num_classes,y_val_num_classes,y_test_num_classes))
         
-        print(bp.classes)
-        y_train = keras.utils.to_categorical(y_train, y_train_num_classes)
-        y_val = keras.utils.to_categorical(y_val, y_val_num_classes)
-        y_test = keras.utils.to_categorical(y_test, y_test_num_classes)
+        y_train = keras.utils.to_categorical(y_train, num_classes_total)
+        y_val = keras.utils.to_categorical(y_val, num_classes_total)
+        y_test = keras.utils.to_categorical(y_test, num_classes_total)
         print(X_train.shape)
         print(y_train.shape)
         

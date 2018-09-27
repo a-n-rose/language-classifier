@@ -102,10 +102,14 @@ class Batch_Data:
     
     def build_class_dict(self):
         poss_comb = []
-        for comb3 in itertools.permutations(self.ipa_present,self.ipa_window):
-            print("CHECKING COMBINATIONS!!!!!!!!!!!!!!")
+        #because some sounds repeat, and repetitions of letters is not covered in permutations, repeat the contents of the characters as much as ipa_window is:
+        ipa_present_repeated = list(itertools.repeat(self.ipa_present,self.ipa_window))
+        #flatten the repeated lists:
+        ipa_chars_repeated = list(itertools.chain.from_iterable(ipa_present_repeated))
+        for comb3 in itertools.permutations(ipa_chars_repeated,self.ipa_window):
+            #print("CHECKING COMBINATIONS!!!!!!!!!!!!!!")
             ipa_set = "".join(comb3)
-            print(ipa_set)
+            #print(ipa_set)
             poss_comb.append(ipa_set)
         print(poss_comb)
         self.num_classes_total = len(poss_comb)+1 #1 to account for the 0 dataset class

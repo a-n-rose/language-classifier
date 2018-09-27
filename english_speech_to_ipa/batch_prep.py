@@ -99,6 +99,13 @@ class Batch_Data:
             num_str+=str(val)
         num_int = int(num_str)
         return num_int
+    
+    def build_label_dict(self,ipa_classes):
+        label_dict = dict()
+        for class_idx in range(len(ipa_classes)):
+            label_dict[ipa_classes[class_idx]]=class_idx+1 #+1 because '0' is to label the zero-padded data, with values of zero
+        self.label_dict = label_dict
+        return self
 
     def doc_ipa_present(self,ipa_window,ipa_shift):
         if ipa_shift > ipa_window:
@@ -133,6 +140,7 @@ class Batch_Data:
         self.build_ipa_dict(ipa_chars)
         self.num_classes = len(ipa_classes) + 1 # 1 = extra zero class for zero padded sequences
         self.classes = ipa_classes
+        self.build_label_dict(ipa_classes)
         return ipa_chars, self.num_classes
             
         
@@ -157,6 +165,10 @@ class Batch_Data:
         new_list_len = len(items_list) - extra
         new_list = items_list[:new_list_len]
         return new_list,len(new_list)
+    
+    def get_label_id(self,ipa_label_str):
+        label_id = self.label_dict[ipa_label_str]
+        return label_id
 
     def generate_batch(self,ipa_dataset_row,dataset_label):
         if len(ipa_dataset_row)<1:
@@ -209,18 +221,21 @@ class Batch_Data:
             index_ipa = batch_iter * self.ipa_shift
             ipa_label = annotation_ipa[index_ipa:index_ipa+self.ipa_window]
             print(ipa_label)
-            #ipa_ints = self.list2int(ipa_label)
+            ipa_id = self.get_label_id(ipa_label)
+            print(ipa_id)
             batch_input = mfcc[start:end,:]
             len_mfccs = len(batch_input)
-            add_label = np.repeat([ipa_label],len_mfccs,axis=0)
+            add_label = np.repeat([ipa_id],len_mfccs,axis=0)
+            print(add_label)
             if batch_input.shape[0] < self.batch_size:
                 diff = self.batch_size - batch_input.shape[0]
                 pad_zeros = np.zeros(shape=(diff,batch_input.shape[1]))
                 batch_input = np.r_[batch_input,pad_zeros]
                 add_zeros = np.repeat([0],diff,axis=0)
-                add_ints = np.r_[add_ints,add_zeros]
+                add_label = np.r_[add_label,add_zeros]
+            #include either 'train', 'validate', 'test' label (i.e. 1,2,3, respectively):
             add_dataset_label = np.repeat([dataset_label_int],len(batch_input),axis=0)
-            batch_input = np.c_[add_dataset_label,batch_input,add_ints]
+            batch_input = np.c_[add_dataset_label,batch_input,add_label]
             #batch_input = np.c_[batch_input,add_ints]
             batch[batch_iter]=batch_input
         

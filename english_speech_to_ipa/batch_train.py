@@ -47,8 +47,8 @@ if __name__=="__main__":
         x_ipa = data_ipa.values
         x_mfcc = data_mfcc.values
 
-        batch_prep = Batch_Data(x_ipa,x_mfcc)
-        ipa_list, num_classes = batch_prep.doc_ipa_present(ipa_window=3,ipa_shift=3)
+        bp = Batch_Data(x_ipa,x_mfcc)
+        ipa_list, num_classes = bp.doc_ipa_present(ipa_window=3,ipa_shift=3)
         logging.info("\n\nIPA characters existent in dataset: \n{}\n\n".format(ipa_list))
         logging.info("Number of total classes: {}".format(num_classes))
         print("Number of total classes: {}".format(num_classes))
@@ -56,16 +56,16 @@ if __name__=="__main__":
         #set up train,validate,test data
         #default settings result in data categorized so: 60% train, 20% validate, 20% train
         #also sets dict of key and value pairs: train = 1, val = 2, test = 3, for database
-        batch_prep.train_val_test()
+        bp.train_val_test()
         #the ipa_train will control the data sets; the mfcc data will rely on the ipa data
         #Note: because each row of IPA data might be different lengths in MFCC data, 
         #the sets won't 100% correspond to their designated sizes. HOWEVER, it is more 
         #important (for now) to keep as much speaker between group mixing. That is most easily 
         #achieved with the IPA data
-        ipa_datasets = batch_prep.get_datasets()
+        ipa_datasets = bp.get_datasets()
         #define perameters for the batches - will be defined to all batches made
         #in this class instance
-        batch_prep.def_batch(batch_size=20)
+        bp.def_batch(batch_size=20)
         #save the batches to sql database
         count = 0
         for batch_item in ipa_datasets:
@@ -73,14 +73,14 @@ if __name__=="__main__":
             update = "Completing dataset {} out of {}".format(count,len(ipa_datasets))
             print(update)
             logging.info(update)
-            key_value = "Dataset key:value pair = {}:{}".format(batch_item[1],batch_prep.get_dataset_value(batch_item[1]))
+            key_value = "Dataset key:value pair = {}:{}".format(batch_item[1],bp.get_dataset_value(batch_item[1]))
             print(key_value)
             logging.info(key_value)
             count2 = 0
             for row in batch_item[0]:
                 count2 += 1
                 update = "Completing row {} out of {}".format(count2,len(batch_item[0]))
-                batch_row, total_row_batches = batch_prep.generate_batch(row,batch_item[1])
+                batch_row, total_row_batches = bp.generate_batch(row,batch_item[1])
                 logging.info("Completed batch of row {}".format(count2))
                 logging.info("Now saving data to database.")
                 db.databatch2sql(batch_row)

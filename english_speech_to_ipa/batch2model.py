@@ -45,24 +45,24 @@ if __name__=="__main__":
         data_ipa = db.sqldata2df(db.table_ipa,limit=1000000)
         logging.info("Loaded data from table {}".format(table_ipa))
         x_ipa = data_ipa.values
-        batch_prep = Batch_Data(data_ipa = x_ipa)
+        bp = Batch_Data(data_ipa = x_ipa)
         #setup dataset dict (which number is associated w train/validate/test)
-        batch_prep.train_val_test()
-        train_label = batch_prep.get_dataset_value(batch_prep.str_train)
-        val_label = batch_prep.get_dataset_value(batch_prep.str_val)
-        test_label = batch_prep.get_dataset_value(batch_prep.str_test)
+        bp.train_val_test()
+        train_label = bp.get_dataset_value(bp.str_train)
+        val_label = bp.get_dataset_value(bp.str_val)
+        test_label = bp.get_dataset_value(bp.str_test)
         
         #get IPA values given ipa window and shift (how many classes I have)        
         ipa_window = 3
         window_shift = 3
-        ipa_list,num_classes = batch_prep.doc_ipa_present(ipa_window,window_shift)
+        ipa_list,num_classes = bp.doc_ipa_present(ipa_window,window_shift)
         #define batches... just to be sure
         batch_size = 20
-        batch_prep.def_batch(batch_size)
+        bp.def_batch(batch_size)
         logging.info("\n\nIPA characters existent in dataset: \n{}\n\n".format(ipa_list))
         logging.info("Number of total classes: {}".format(num_classes))
         print("Number of total classes: {}".format(num_classes))
-        print(batch_prep.classes)
+        print(bp.classes)
         
         #get train data:
         df_train = db.sqldata2df(table_final,column_value_list=[['dataset',train_label]])
@@ -70,19 +70,20 @@ if __name__=="__main__":
         df_test = db.sqldata2df(table_final,column_value_list=[['dataset',test_label]])
         
         #set num features based off of num columns in dataframe:
-        batch_prep.get_num_features(df_train)
+        bp.get_num_features(df_train)
+        print("Number of features: {}".format(bp.num_features))
 
         #form df into matrices:
-        x_y_train = batch_prep.get_x_y(df_train)
-        x_y_val = batch_prep.get_x_y(df_val)
-        x_y_test = batch_prep.get_x_y(df_test)
+        x_y_train = bp.get_x_y(df_train)
+        x_y_val = bp.get_x_y(df_val)
+        x_y_test = bp.get_x_y(df_test)
         
         #prep data for LSTM
         
         #first normalize data    
-        X_train = batch_prep.normalize_data(x_y_train[0])
-        X_val = batch_prep.normalize_data(x_y_val[0])
-        X_test = batch_prep.normalize_data(x_y_test[0])
+        X_train = bp.normalize_data(x_y_train[0])
+        X_val = bp.normalize_data(x_y_val[0])
+        X_test = bp.normalize_data(x_y_test[0])
     
     
         #feature scaling
@@ -93,18 +94,18 @@ if __name__=="__main__":
 
             
         #I want to merge the three columns together in the y datasets
-        X_train = batch_prep.make2d_3d(x_y_train[0])
-        y_train = batch_prep.make2d_3d(x_y_train[1])
-        X_val = batch_prep.make2d_3d(x_y_val[0])
-        y_val = batch_prep.make2d_3d(x_y_val[1])
-        X_test = batch_prep.make2d_3d(x_y_test[0])
-        y_test = batch_prep.make2d_3d(x_y_test[1])
+        X_train = bp.make2d_3d(x_y_train[0])
+        y_train = bp.make2d_3d(x_y_train[1])
+        X_val = bp.make2d_3d(x_y_val[0])
+        y_val = bp.make2d_3d(x_y_val[1])
+        X_test = bp.make2d_3d(x_y_test[0])
+        y_test = bp.make2d_3d(x_y_test[1])
 
 
         #categorical data for multiple classes
         #num classes based on number of possible 3-letter combinations of all ipa characters
         #num_classes_test = set(y_train[2])
-        num_classes = batch_prep.num_classes
+        num_classes = bp.num_classes
         
         
         #need to figure out how to one-hot-encode the ipa labels
@@ -131,19 +132,19 @@ if __name__=="__main__":
         vector = y_train.shape[0]
         #Build Model:
         #model = Sequential()
-        #model.add(LSTM(40, return_sequences=True,input_shape=(batch_prep.batch_size,input_dim)))
+        #model.add(LSTM(40, return_sequences=True,input_shape=(bp.batch_size,input_dim)))
         #model.add(LSTM(40, return_sequences=True))
         #model.add(Flatten())
         #model.add(Flatten())
-        #units_layers = (input_dim+batch_prep.num_classes)//2
-        #model.add(Dense(units = units_layers,input_shape = (vector, batch_size, ipa_window, batch_prep.num_classes),activation='softmax'))
-        ##model.add(TimeDistributed(Dense(batch_prep.num_classes)))
+        #units_layers = (input_dim+bp.num_classes)//2
+        #model.add(Dense(units = units_layers,input_shape = (vector, batch_size, ipa_window, bp.num_classes),activation='softmax'))
+        ##model.add(TimeDistributed(Dense(bp.num_classes)))
         ##model.add(Activation('softmax'))
         
         #hidden layer: 40 * 2
         model = Sequential()
-        model.add(Embedding(num_classes, batch_prep.num_features, input_length=batch_prep.batch_size))
-        model.add(LSTM(80,return_sequences=True,input_shape=(batch_prep.batch_size,input_dim)))
+        model.add(Embedding(num_classes, bp.num_features, input_length=bp.batch_size))
+        model.add(LSTM(80,return_sequences=True,input_shape=(bp.batch_size,input_dim)))
         model.add(Dropout(0.2))
         
         model.add(LSTM(80,return_sequences=True))

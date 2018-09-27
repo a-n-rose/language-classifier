@@ -27,8 +27,7 @@ class KerasBatchGenerator(object):
                 if self.current_idx + self.batch_size_model >= len(self.data_x):
                     self.current_idx = 0
                 x[i,:,:] = self.data_x[self.current_idx]
-                temp_y = self.data_y[self.current_idx]
-                y[i,:,:] = to_categorical(temp_y,num_classes = self.classes_total)
+                y[i,:,:] = self.data_y[self.current_idx]
                 self.current_idx += self.skip_step
             yield x,y
                 

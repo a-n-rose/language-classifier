@@ -157,9 +157,9 @@ if __name__=="__main__":
         
     
         #in order to avoid memory error problem when assigning one-hot-encoded values
-        #model.compile(loss='sparse_categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
+        model.compile(loss='sparse_categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
         
-        model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
+        #model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
         
         #batchsize: 80 * 2
         #numbers: batchsize and epochs

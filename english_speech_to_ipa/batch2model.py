@@ -73,7 +73,6 @@ if __name__=="__main__":
         
         #set num features based off of num columns in dataframe:
         bp.get_num_features(df_train)
-        print("Number of features: {}".format(bp.num_features))
 
         #form df into matrices:
         x_y_train = bp.get_x_y(df_train)
@@ -108,19 +107,6 @@ if __name__=="__main__":
         #num classes based on number of possible 3-letter combinations of all ipa characters
         num_classes = num_classes
         
-        
-        #need to figure out how to one-hot-encode the ipa labels
-        #need to fix how they're labeled - based on commonality?
-        
-        
-        
-        print("Y shape: ",y_train.shape)
-        print(y_train[:,:,0])
-        print(len(y_train[:,:,0]))
-        print(type(y_train[:,:,0]))
-        print(y_train[0,0,:])
-        
-        
         #do I need to first see which classes are in the y data?
         y_train_num_classes = bp.classes_present(y_train)
         y_val_num_classes = bp.classes_present(y_val)
@@ -128,30 +114,12 @@ if __name__=="__main__":
         
         print("Num Classes in \n~ train data: {} \n~ validation data: {} \n~ test data: {}".format(y_train_num_classes,y_val_num_classes,y_test_num_classes))
         
-        #memory error
-        #y_train = keras.utils.to_categorical(y_train, num_classes_total)
-        #y_val = keras.utils.to_categorical(y_val, num_classes_total)
-        #y_test = keras.utils.to_categorical(y_test, num_classes_total)
-        #print(X_train.shape)
-        #print(y_train.shape)
-        
         input_dim = X_train.shape[2]
-        input_num = X_train.shape[1]
         vector = y_train.shape[0]
         #Build Model:
-        #model = Sequential()
-        #model.add(LSTM(40, return_sequences=True,input_shape=(bp.batch_size,input_dim)))
-        #model.add(LSTM(40, return_sequences=True))
-        #model.add(Flatten())
-        #model.add(Flatten())
-        #units_layers = (input_dim+bp.num_classes)//2
-        #model.add(Dense(units = units_layers,input_shape = (vector, batch_size, ipa_window, bp.num_classes),activation='softmax'))
-        ##model.add(TimeDistributed(Dense(bp.num_classes)))
-        ##model.add(Activation('softmax'))
         
         #hidden layer: 40 * 2
         model = Sequential()
-        #model.add(Embedding(num_classes, bp.num_features, input_length=bp.batch_size))
         model.add(LSTM(80,return_sequences=True,input_shape=(bp.batch_size,input_dim)))
         model.add(Dropout(0.2))
         
@@ -165,8 +133,7 @@ if __name__=="__main__":
         model.add(Dense(num_classes_total))
         model.add(Activation('softmax'))
         
-        
-        #model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metics=['accuracy'])
+    
         #in order to avoid memory error problem when assigning one-hot-encoded values
         model.compile(loss='sparse_categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
         
@@ -216,3 +183,11 @@ if __name__=="__main__":
         db.close_conn()
         logging.info("database {} successfully closed.".format(database))
 
+#Train on 997 samples, validate on 325 samples
+#Epoch 1/50
+#2018-09-27 16:12:14.517416: W tensorflow/core/framework/allocator.cc:108] Allocation of 9022476800 exceeds 10% of system memory.
+#2018-09-27 16:12:19.202869: W tensorflow/core/framework/allocator.cc:108] Allocation of 9022476800 exceeds 10% of system memory.
+#2018-09-27 16:12:32.884230: W tensorflow/core/framework/allocator.cc:108] Allocation of 9022476800 exceeds 10% of system memory.
+#2018-09-27 16:12:43.274051: W tensorflow/core/framework/allocator.cc:108] Allocation of 9022476800 exceeds 10% of system memory.
+#2018-09-27 16:13:01.501110: W tensorflow/core/framework/allocator.cc:108] Allocation of 9022476800 exceeds 10% of system memory.
+#Segmentation fault

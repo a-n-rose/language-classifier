@@ -124,7 +124,7 @@ class Batch_Data:
         #NEED TO REMOVE UNWANTED CHARACTERS EARLIER TO IDENTIFY TOTAL CLASSES
         #ipa_chars = self.remove_spaces_endofline(ipa_chars)
         self.build_ipa_dict(ipa_chars)
-        self.num_classes = len(ipa_classes)
+        self.num_classes = len(ipa_classes) + 1 # 1 = extra zero class for zero padded sequences
         self.classes = ipa_classes
         return ipa_chars, self.num_classes
             

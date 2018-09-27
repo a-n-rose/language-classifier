@@ -103,7 +103,8 @@ class Batch_Data:
     def build_class_dict(self):
         poss_comb = []
         #because some sounds repeat, and repetitions of letters is not covered in permutations, repeat the contents of the characters as much as ipa_window is:
-        ipa_present_repeated = list(itertools.repeat(self.ipa_present,self.ipa_window))
+        #try 2 repetitions... what are the chances of a sound repeating more than once?
+        ipa_present_repeated = list(itertools.repeat(self.ipa_present,2))
         #flatten the repeated lists:
         ipa_chars_repeated = list(itertools.chain.from_iterable(ipa_present_repeated))
         for comb3 in itertools.permutations(ipa_chars_repeated,self.ipa_window):
@@ -111,7 +112,7 @@ class Batch_Data:
             ipa_set = "".join(comb3)
             #print(ipa_set)
             poss_comb.append(ipa_set)
-        print(poss_comb)
+        #print(poss_comb)
         self.num_classes_total = len(poss_comb)+1 #1 to account for the 0 dataset class
         dict_classes = dict()
         for comb_idx in range(len(poss_comb)):
@@ -150,7 +151,7 @@ class Batch_Data:
         #NEED TO REMOVE UNWANTED CHARACTERS EARLIER TO IDENTIFY TOTAL CLASSES
         #ipa_chars = self.remove_spaces_endofline(ipa_chars)
         self.ipa_present = ipa_chars
-        print(ipa_chars)
+        #print(ipa_chars)
         self.build_ipa_dict()
         #self.build_label_dict()
         num_classes_local = len(ipa_classes) + 1 # 1 = extra zero class for zero padded sequences
@@ -234,9 +235,9 @@ class Batch_Data:
                 end = len(mfcc)
             index_ipa = batch_iter * self.ipa_shift
             ipa_label = annotation_ipa[index_ipa:index_ipa+self.ipa_window]
-            print(ipa_label)
+            #print(ipa_label)
             ipa_id = self.get_label_id(ipa_label)
-            print(ipa_id)
+            #print(ipa_id)
             batch_input = mfcc[start:end,:]
             len_mfccs = len(batch_input)
             add_label = np.repeat([ipa_id],len_mfccs,axis=0)

@@ -94,23 +94,23 @@ if __name__=="__main__":
         logging.info(timepassed_message)
 
     except DatabaseLimitError as e:
-        logging.error("Error occurred: {}".format(e))
+        logging.error("DatabaseLimitError: {}".format(e))
     except ValidateDataRequiresTestDataError as e:
-        logging.error("Error occurred: {}".format(e))
+        logging.error("ValidateDataRequiresTestDataError: {}".format(e))
     except ShiftLargerThanWindowError as e:
-        logging.error("Error occurred: {}".format(e))
+        logging.error("ShiftLargerThanWindowError: {}".format(e))
     except TrainDataMustBeSetError as e:
-        logging.error("Error occurred: {}".format(e))
+        logging.error("TrainDataMustBeSetError: {}".format(e))
     except EmptyDataSetError as e:
-        logging.error("Error occurred: {}".format(e))
+        logging.error("EmptyDataSetError: {}".format(e))
     except KeyError as e:
-        logging.error("Error occurred: {}".format(e))
+        logging.error("KeyError: {}".format(e))
     except MFCCdataNotFoundError as e:
-        logging.error("Error occurred: {}".format(e))
+        logging.error("MFCCdataNotFoundError: {}".format(e))
     except Error as e:
         logging.error("Database error: {}".format(e))
     except SystemExit:
-        logging.error("Had to exit program early.")
+        logging.error("SystemExit: Had to exit program early.")
     #Close database connections:
     finally:
         db.close_conn()

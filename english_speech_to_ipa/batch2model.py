@@ -117,28 +117,28 @@ if __name__=="__main__":
         y_val_num_classes = bp.classes_present(y_val)
         y_test_num_classes = bp.classes_present(y_test)
         
-        print("Num Classes in \n~ train data: {} \n~ validation data: {} \n~ test data: {}".format(y_train_num_classes,y_val_num_classes,y_test_num_classes))
+        #print("Num Classes in \n~ train data: {} \n~ validation data: {} \n~ test data: {}".format(y_train_num_classes,y_val_num_classes,y_test_num_classes))
         
-        print("Shape of input data: {}".format(X_train.shape))
-        trainx20 = X_train[0:20]
-        print("Just 20 rows of input: {}".format(trainx20))
-        print("Size of that: {}".format(trainx20.shape))
-        print("Shape of output data: {}".format(y_train.shape))
-        trainy20 = y_train[0:20]
-        print("Just 20 rows of output: {}".format(trainy20))
-        print("Size of that: {}".format(trainy20.shape))
+        #print("Shape of input data: {}".format(X_train.shape))
+        #trainx20 = X_train[0:20]
+        #print("Just 20 rows of input: {}".format(trainx20))
+        #print("Size of that: {}".format(trainx20.shape))
+        #print("Shape of output data: {}".format(y_train.shape))
+        #trainy20 = y_train[0:20]
+        #print("Just 20 rows of output: {}".format(trainy20))
+        #print("Size of that: {}".format(trainy20.shape))
         
         input_dim = X_train.shape[2]
         vector = y_train.shape[0]
         #Build Model:
         #raise SystemExit
         
-        batch_size_model = 20
+        batch_size_model = 5
         
-        train_data_generator = KerasBatchGenerator(X_train,y_train,num_steps=bp.batch_size,batch_size_model=20,num_features=bp.num_features,classes_total=bp.num_classes_total,num_output_labels=y_train.shape[2],skip_step=1)
+        train_data_generator = KerasBatchGenerator(X_train,y_train,num_steps=bp.batch_size,batch_size_model=batch_size_model,num_features=bp.num_features,classes_total=bp.num_classes_total,num_output_labels=y_train.shape[2],skip_step=bp.batch_size)
         
         
-        val_data_generator = KerasBatchGenerator(X_val,y_val,num_steps=bp.batch_size,batch_size_model=batch_size_model,num_features=bp.num_features,classes_total=bp.num_classes_total,num_output_labels=y_train.shape[2],skip_step=1)
+        val_data_generator = KerasBatchGenerator(X_val,y_val,num_steps=bp.batch_size,batch_size_model=batch_size_model,num_features=bp.num_features,classes_total=bp.num_classes_total,num_output_labels=y_train.shape[2],skip_step=bp.batch_size)
         
         
         
@@ -164,8 +164,10 @@ if __name__=="__main__":
         #batchsize: 80 * 2
         #numbers: batchsize and epochs
         #model.fit(X_train,y_train,epochs=50,batch_size=160,validation_data=(X_val,y_val))
-        epochs = 50
-        model.fit_generator(train_data_generator.generate(),len(X_train)//(train_data_generator.batch_size_model*train_data_generator.skip_step),epochs, validation_data=val_data_generator.generate(),validation_steps=len(X_val)//(val_data_generator.batch_size_model*val_data_generator.skip_step))
+        epochs = 5
+        ##for when enough data is available (I think validation data is not sufficient)
+        #model.fit_generator(train_data_generator.generate(),len(X_train)//(train_data_generator.batch_size_model*train_data_generator.skip_step),epochs, validation_data=val_data_generator.generate(),validation_steps=len(X_val)//(val_data_generator.batch_size_model*val_data_generator.skip_step))
+        model.fit_generator(train_data_generator.generate(),len(X_train)//(train_data_generator.batch_size_model*train_data_generator.skip_step),epochs)
         
         
         score = model.evaluate(X_test,y_test,verbose=0)

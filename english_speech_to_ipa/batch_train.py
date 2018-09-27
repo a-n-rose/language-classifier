@@ -29,7 +29,7 @@ if __name__=="__main__":
     table_ipa = 'speech_as_ipa'
     table_mfcc = 'speech_as_mfcc'
     #table where combined datasets will be saved
-    table_final = 'english_40mfcc_ipawindow3_ipashift3_1label_datasets20batches'
+    table_final = 'english_40mfcc_ipawindow3_ipashift3_1label_datasets20batches_idclasses'
     db = Connect_db(database,table_ipa,table_mfcc,table_final)
 
     
@@ -48,10 +48,11 @@ if __name__=="__main__":
         x_mfcc = data_mfcc.values
 
         bp = Batch_Data(x_ipa,x_mfcc)
-        ipa_list, num_classes = bp.doc_ipa_present(ipa_window=3,ipa_shift=3)
-        logging.info("\n\nIPA characters existent in dataset: \n{}\n\n".format(ipa_list))
-        logging.info("Number of total classes: {}".format(num_classes))
-        print("Number of total classes: {}".format(num_classes))
+        ipa_list, num_classes, num_classes_total = bp.doc_ipa_present(ipa_window=3,ipa_shift=3)
+        #logging.info("\n\nIPA characters existent in dataset: \n{}\n\n".format(ipa_list))
+        #logging.info("Number of total classes: {}".format(num_classes))
+        print("Number of local classes: {}".format(num_classes))
+        print("Number of total possible classes: {}".format(num_classes_total))
 
         #set up train,validate,test data
         #default settings result in data categorized so: 60% train, 20% validate, 20% train

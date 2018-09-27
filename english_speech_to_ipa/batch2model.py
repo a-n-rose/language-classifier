@@ -1,3 +1,8 @@
+'''
+Useful links:
+https://medium.com/@fromtheast/implement-fit-generator-in-keras-61aa2786ce98
+'''
+
 import os
 
 import numpy as np
@@ -13,7 +18,7 @@ from keras.models import Sequential
 from keras.layers import Dense, LSTM, Flatten, Embedding, TimeDistributed, Activation, Dropout
 
 from Errors import Error, DatabaseLimitError, ValidateDataRequiresTestDataError, ShiftLargerThanWindowError, TrainDataMustBeSetError, EmptyDataSetError, MFCCdataNotFoundError
-
+from generator import KerasBatchGenerator
 
 #needed for logging 
 import time
@@ -114,32 +119,53 @@ if __name__=="__main__":
         
         print("Num Classes in \n~ train data: {} \n~ validation data: {} \n~ test data: {}".format(y_train_num_classes,y_val_num_classes,y_test_num_classes))
         
+        print("Shape of input data: {}".format(X_train.shape))
+        trainx20 = X_train[0:20]
+        print("Just 20 rows of input: {}".format(trainx20))
+        print("Size of that: {}".format(trainx20.shape))
+        print("Shape of output data: {}".format(y_train.shape))
+        trainy20 = y_train[0:20]
+        print("Just 20 rows of output: {}".format(trainy20))
+        print("Size of that: {}".format(trainy20.shape))
+        
         input_dim = X_train.shape[2]
         vector = y_train.shape[0]
         #Build Model:
+        #raise SystemExit
+        
+        batch_size_model = 20
+        
+        train_data_generator = KerasBatchGenerator(X_train,y_train,num_steps=bp.batch_size,batch_size=20,num_features=self.num_features,classes_total=bp.num_classes_total,num_output_labels=y_train.shape[2],skip_step=1)
+        
+        
+        val_data_generator = KerasBatchGenerator(X_val,y_val,num_steps=bp.batch_size,batch_size_model=batch_size_model,num_features=self.num_features,classes_total=bp.num_classes_total,num_output_labels=y_train.shape[2],skip_step=1)
+        
+        
         
         #hidden layer: 40 * 2
         model = Sequential()
-        model.add(LSTM(80,return_sequences=True,input_shape=(bp.batch_size,input_dim)))
-        model.add(Dropout(0.2))
-        
-        model.add(LSTM(80,return_sequences=True))
+        #model.add(Embedding(bp.num_classes_total,self.num_features,input_length=self.batch_size))
+        model.add(LSTM(80,return_sequences=True,input_shape=(bp.batch_size,bp.num_features)))
         model.add(Dropout(0.2))
         
         model.add(LSTM(80,return_sequences=True))
         model.add(Dropout(0.2))
         
         #model.add(Flatten())
-        model.add(Dense(num_classes_total))
+        model.add(TimeDistributed(Dense(bp.num_classes_total)))
         model.add(Activation('softmax'))
         
     
         #in order to avoid memory error problem when assigning one-hot-encoded values
-        model.compile(loss='sparse_categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
+        #model.compile(loss='sparse_categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
+        
+        model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
         
         #batchsize: 80 * 2
         #numbers: batchsize and epochs
-        model.fit(X_train,y_train,epochs=50,batch_size=160,validation_data=(X_val,y_val))
+        #model.fit(X_train,y_train,epochs=50,batch_size=160,validation_data=(X_val,y_val))
+        epochs = 50
+        model.fit_generator(train_data_generator.generate(),len(X_train)//(train_data_generator.batch_size_model*train_data_generator.skip_step),epochs, validation_data=val_data_generator.generate(),validation_steps=len(X_val)//(val_data_generator.batch_size_model*val_data_generator.skip_step))
         
         
         score = model.evaluate(X_test,y_test,verbose=0)
@@ -182,12 +208,3 @@ if __name__=="__main__":
     finally:
         db.close_conn()
         logging.info("database {} successfully closed.".format(database))
-
-#Train on 997 samples, validate on 325 samples
-#Epoch 1/50
-#2018-09-27 16:12:14.517416: W tensorflow/core/framework/allocator.cc:108] Allocation of 9022476800 exceeds 10% of system memory.
-#2018-09-27 16:12:19.202869: W tensorflow/core/framework/allocator.cc:108] Allocation of 9022476800 exceeds 10% of system memory.
-#2018-09-27 16:12:32.884230: W tensorflow/core/framework/allocator.cc:108] Allocation of 9022476800 exceeds 10% of system memory.
-#2018-09-27 16:12:43.274051: W tensorflow/core/framework/allocator.cc:108] Allocation of 9022476800 exceeds 10% of system memory.
-#2018-09-27 16:13:01.501110: W tensorflow/core/framework/allocator.cc:108] Allocation of 9022476800 exceeds 10% of system memory.
-#Segmentation fault

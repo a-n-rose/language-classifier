@@ -68,10 +68,10 @@ class Batch_Data:
             newstring.remove("\n")
         return newstring
 
-    def build_ipa_dict(self,ipa_list):
+    def build_ipa_dict(self):
         dict_ipa = dict()
-        for num in range(len(ipa_list)):
-            dict_ipa[ipa_list[num]] = num+1
+        for num in range(len(self.ipa_present)):
+            dict_ipa[self.ipa_present[num]] = num+1
         #create entry for zero classification (zero padded entries)
         dict_ipa[""] = 0
         self.dict_ipa = dict_ipa
@@ -100,11 +100,19 @@ class Batch_Data:
         num_int = int(num_str)
         return num_int
     
-    def build_label_dict(self,ipa_classes):
-        label_dict = dict()
-        for class_idx in range(len(ipa_classes)):
-            label_dict[ipa_classes[class_idx]]=class_idx+1 #+1 because '0' is to label the zero-padded data, with values of zero
-        self.label_dict = label_dict
+    def build_class_dict(self):
+        poss_comb = []
+        for comb3 in itertools.permutations(self.ipa_present,self.ipa_window):
+            print("CHECKING COMBINATIONS!!!!!!!!!!!!!!")
+            ipa_set = "".join(comb3)
+            print(ipa_set)
+            poss_comb.append(ipa_set)
+        print(poss_comb)
+        self.num_classes_total = len(poss_comb)+1 #1 to account for the 0 dataset class
+        dict_classes = dict()
+        for comb_idx in range(len(poss_comb)):
+            dict_classes[poss_comb[comb_idx]] = comb_idx + 1 # 0 is reserved for the zero padded data
+        self.dict_classes = dict_classes
         return self
 
     def doc_ipa_present(self,ipa_window,ipa_shift):
@@ -137,13 +145,15 @@ class Batch_Data:
                         ipa_classes.append(ipa_label)
         #NEED TO REMOVE UNWANTED CHARACTERS EARLIER TO IDENTIFY TOTAL CLASSES
         #ipa_chars = self.remove_spaces_endofline(ipa_chars)
-        self.build_ipa_dict(ipa_chars)
-        self.num_classes = len(ipa_classes) + 1 # 1 = extra zero class for zero padded sequences
-        self.classes = ipa_classes
-        self.build_label_dict(ipa_classes)
-        return ipa_chars, self.num_classes
+        self.ipa_present = ipa_chars
+        print(ipa_chars)
+        self.build_ipa_dict()
+        #self.build_label_dict()
+        num_classes_local = len(ipa_classes) + 1 # 1 = extra zero class for zero padded sequences
+        #self.classes_local = ipa_classes
+        self.build_class_dict()
+        return ipa_chars, num_classes_local, self.num_classes_total
             
-        
     def def_batch(self,batch_size):
         self.batch_size = batch_size
         return self
@@ -167,7 +177,7 @@ class Batch_Data:
         return new_list,len(new_list)
     
     def get_label_id(self,ipa_label_str):
-        label_id = self.label_dict[ipa_label_str]
+        label_id = self.dict_classes[ipa_label_str]
         return label_id
 
     def generate_batch(self,ipa_dataset_row,dataset_label):
@@ -226,7 +236,6 @@ class Batch_Data:
             batch_input = mfcc[start:end,:]
             len_mfccs = len(batch_input)
             add_label = np.repeat([ipa_id],len_mfccs,axis=0)
-            print(add_label)
             if batch_input.shape[0] < self.batch_size:
                 diff = self.batch_size - batch_input.shape[0]
                 pad_zeros = np.zeros(shape=(diff,batch_input.shape[1]))

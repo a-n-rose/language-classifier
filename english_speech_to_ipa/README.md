@@ -15,4 +15,4 @@ I hope this makes sense.. I will explain this in more detail in my <a href="">bl
 ## ToDo
 * Improve progress documentation in commandline
 * Improve logging and printing statements in general 
-* Apply data to LSTM
+* Test how the model trains on speech MFCC data without added noise

@@ -39,11 +39,29 @@ if __name__=="__main__":
     table_ipa = 'speech_as_ipa'
     table_mfcc = 'speech_as_mfcc'
     #table where combined datasets will be saved
-    table_final = 'english_40mfcc_ipawindow3_ipashift3_1label_datasets20batches_idclasses'
+    
+    #VARIOUS TABLES TO CHOOSE FROM:
+    #table w win=3,shift=3,ipacharsonly=false
+    #table_final = 'english_40mfcc_ipawindow3_ipashift3_1label_datasets20batches_idclasses'
+    
+    ##table w win=3,shift=1,ipacharsonly=False
+    #table_final = 'english_40mfcc_ipawindow3_ipashift1_1label_datasets20batches_idclasses_ipacharsonlyFalse'
+    
+    #table w win=3 shift=1, ipacharsonly=True
+    table_final = 'english_40mfcc_ipawindow3_ipashift1_1label_datasets20batches_idclasses_ipacharsonly'
+    
+    ##table w win=3 shift=3, ipacharsonly=True
+    #table_final = 'english_40mfcc_ipawindow3_ipashift3_1label_datasets20batches_idclasses_ipacharsonly'
+    
     db = Connect_db(database,table_ipa,table_mfcc,table_final)
 
-    logging.info("Database where data is pulled from: {}".format(database))
-    logging.info("Table where data is pulled from: {}".format(table_final))
+    db_msg = "Database where data is pulled from: {}".format(database)
+    tb_msg = "Table where data is pulled from: {}".format(table_final)
+
+    logging.info(db_msg)
+    logging.info(tb_msg)
+    print(db_msg)
+    print(tb_msg)
     
 
     try: 
@@ -149,12 +167,14 @@ if __name__=="__main__":
         
         date = get_date()
         model_name = 'engspeech2ipa_{}'.format(date)
-        logging.info('Saving Model as {}'.format(model_name))
+        logging.info('Saving Model ')
         model_json = model.to_json()
         with open(model_name+'.json','w') as json_file:
             json_file.write(model_json)
         model.save_weights(model_name+'.h5')
-        logging.info("Model saved!")
+        sv_model_msg = "Model saved as as {}".format(model_name)
+        logging.info(sv_model_msg)
+        print(sv_model_msg)
         
         
         ############ Close up shop ############

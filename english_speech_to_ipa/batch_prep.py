@@ -140,14 +140,9 @@ class Batch_Data:
                         pass
                     else:
                         ipa_classes.append(ipa_label)
-        #NEED TO REMOVE UNWANTED CHARACTERS EARLIER TO IDENTIFY TOTAL CLASSES
-        #ipa_chars = self.remove_spaces_endofline(ipa_chars)
         self.ipa_present = ipa_chars
-        #print(ipa_chars)
         self.build_ipa_dict()
-        #self.build_label_dict()
         num_classes_local = len(ipa_classes) + 1 # 1 = extra zero class for zero padded sequences
-        #self.classes_local = ipa_classes
         self.build_class_dict()
         return ipa_chars, num_classes_local, self.num_classes_total
             
@@ -160,8 +155,6 @@ class Batch_Data:
         return label_int
 
     def get_tgz_name(self,path,wav):
-        #path = path[1:-1]
-        #path_split = Path(path).name
         tgz_name = "{}_{}".format(path,wav)
         return tgz_name
     
@@ -180,7 +173,7 @@ class Batch_Data:
     def generate_batch(self,ipa_dataset_row,dataset_label):
         if len(ipa_dataset_row)<1:
             raise EmptyDataSetError("The provided dataset row is empty.")
-        #get dataset value to apply to data
+        #get dataset value (1 = train, 2 = validate, 3 = test) to apply to data
         dataset_label_int = self.get_dataset_value(dataset_label)
         #get annotation data for output label
         ipa = ipa_dataset_row

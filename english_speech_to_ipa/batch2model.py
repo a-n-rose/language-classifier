@@ -38,6 +38,17 @@ if __name__=="__main__":
     database = 'speech_wnoise_ipa_mfcc.db'
     table_ipa = 'speech_as_ipa'
     table_mfcc = 'speech_as_mfcc'
+    
+    #IMPORTANT VARIABLES:
+    ipa_window = 3
+    window_shift = 1
+    batch_size = 20
+    num_mfcc = 40
+    withnoise = False
+    
+    print("Window size: {}\nShift size: {}\nBatch size (num sequences): {}\nNumber of features: {}\nNoise added to features: {}".format(ipa_window,window_shift,batch_size,num_mfcc,withnoise))
+    logging.info("\nWindow size: {}\nShift size: {}\nBatch size (num sequences): {}\nNumber of features: {}\nNoise added to features: {}".format(ipa_window,window_shift,batch_size,num_mfcc,withnoise))
+    
     #table where combined datasets will be saved
     
     #VARIOUS TABLES TO CHOOSE FROM:
@@ -47,17 +58,17 @@ if __name__=="__main__":
     ##table w win=3,shift=1,ipacharsonly=False
     #table_final = 'english_40mfcc_ipawindow3_ipashift1_1label_datasets20batches_idclasses_ipacharsonlyFalse'
     
-    #table w win=3 shift=1, ipacharsonly=True
-    table_final = 'english_40mfcc_ipawindow3_ipashift1_1label_datasets20batches_idclasses_ipacharsonly'
+    ##table w win=3 shift=1, ipacharsonly=True
+    #table_final = 'english_40mfcc_ipawindow3_ipashift1_1label_datasets20batches_idclasses_ipacharsonly'
     
-    ##table w win=3 shift=3, ipacharsonly=True
-    #table_final = 'english_40mfcc_ipawindow3_ipashift3_1label_datasets20batches_idclasses_ipacharsonly'
+    #table w win=3 shift=3, ipacharsonly=True
+    table_final = 'english_40mfcc_ipawindow3_ipashift1_1label_datasets20batches_idclasses_ipacharsonly'
     
     db = Connect_db(database,table_ipa,table_mfcc,table_final)
 
     db_msg = "Database where data is pulled from: {}".format(database)
     tb_msg = "Table where data is pulled from: {}".format(table_final)
-
+    
     logging.info(db_msg)
     logging.info(tb_msg)
     print(db_msg)
@@ -77,11 +88,10 @@ if __name__=="__main__":
         test_label = bp.get_dataset_value(bp.str_test)
         
         #get IPA values given ipa window and shift (how many classes I have)        
-        ipa_window = 3
-        window_shift = 3
-        ipa_list,num_classes_local,num_classes_total = bp.doc_ipa_present(ipa_window,window_shift)
+
+        ipa_list,num_classes_local,num_classes_total = bp.doc_ipa_present(ipa_window,window_shift,ipa_chars_only=True)
         #define batches... just to be sure
-        batch_size = 20
+
         bp.def_batch(batch_size)
         logging.info("Number of classes in dataset: {}".format(num_classes_local))
         logging.info("Number of total possible classes (various combinations of IPA characters in sets of 3): {}".format(num_classes_total))

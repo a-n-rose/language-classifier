@@ -42,7 +42,7 @@ if __name__=="__main__":
     #IMPORTANT VARIABLES:
     ipa_window = 3
     window_shift = 1
-    ipa_chars_only = True
+    ipa_chars_only = False
     batch_size = 20
     num_mfcc = 40
     withnoise = False
@@ -170,7 +170,8 @@ if __name__=="__main__":
         # when not assigning one-hot-encoded values to y_train multi-class data, use 'sparse_categorical_crossentropy' (as long as labels are integers)
         model.compile(loss='sparse_categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
         
-        epochs = 5
+        epochs = 5 #just for experimentation
+        
         ##for when enough data is available (I think validation data is not sufficient)
         #model.fit_generator(train_data_generator.generate(),len(X_train)//(train_data_generator.batch_size_model*train_data_generator.skip_step),epochs, validation_data=val_data_generator.generate(),validation_steps=len(X_val)//(val_data_generator.batch_size_model*val_data_generator.skip_step))
         model.fit_generator(train_data_generator.generate(),len(X_train)//(train_data_generator.batch_size_model*train_data_generator.skip_step),epochs)

@@ -20,7 +20,7 @@ session_name = get_date() #make sure this session has a unique identifier - link
 
 
 #global variables:
-num_mfcc=13
+num_mfcc=40 # 40, 13
 noisefile = 'background_noise_poor_recording.wav' #options: None 'somewavefile.wav' i.e.: 'background_noise_poor_recording.wav'
 noise_doc = bool(noisefile)
 tablename_annotations = 'speech_as_ipa'
@@ -73,7 +73,12 @@ if __name__ == '__main__':
         
         if collected:
             print("Annotations and MFCCs have been collected.")
-                    
+        
+        
+        elapsed_time_hours = (time.time()-prog_start)/3600
+        timepassed_message = 'Elapsed time in hours: {}'.format(elapsed_time_hours)
+        logging.info(timepassed_message)
+        print(timepassed_message)
         
     except Exception as e:
         logging.error("Error occurred: {}".format(e))

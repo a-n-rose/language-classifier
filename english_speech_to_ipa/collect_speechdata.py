@@ -51,6 +51,7 @@ class Speech_Data():
             self.noisegroup = 'none'
         else:
             self.noisegroup = 'noise'
+        self.missing_file = []
 
     def prep_ipa_cols(self,tablename,columns_list):
         msg = ''' CREATE TABLE IF NOT EXISTS {}(%s) '''.format(tablename) % ", ".join(columns_list)
@@ -135,23 +136,30 @@ class Speech_Data():
 
     def annotations2IPA(self,tablename,session_info,path,language):
         annotation_file = path + 'etc/PROMPTS'
-        annotations = open(annotation_file,'r').readlines()
-        for annotation in annotations:
-            annotation_list = annotation.split(' ')
-            wavename = Path(annotation_list[0]).name+'.wav'
-            words = annotation_list[1:]
-            words_str = ' '.join(words)
-            print("Annotation of wavefile {} is: {}".format(wavename,words_str))
-            ipa = check_output(["espeak", "-q", "--ipa", "-v", "en-us", words_str]).decode("utf-8")
-            print("IPA translation: {}".format(ipa))
-            cmd = '''INSERT INTO {} VALUES (?,?,?,?,?)'''.format(tablename)
-            self.c.execute(cmd, (session_info,wavename,words_str,ipa,language))
-            self.conn.commit()
-            print("Annotation saved successfully.")
-        return None
+        try:
+            annotations = open(annotation_file,'r').readlines()
+            for annotation in annotations:
+                annotation_list = annotation.split(' ')
+                wavename = Path(annotation_list[0]).name+'.wav'
+                words = annotation_list[1:]
+                words_str = ' '.join(words)
+                print("Annotation of wavefile {} is: {}".format(wavename,words_str))
+                ipa = check_output(["espeak", "-q", "--ipa", "-v", "en-us", words_str]).decode("utf-8")
+                print("IPA translation: {}".format(ipa))
+                cmd = '''INSERT INTO {} VALUES (?,?,?,?,?)'''.format(tablename)
+                self.c.execute(cmd, (session_info,wavename,words_str,ipa,language))
+                self.conn.commit()
+                print("Annotation saved successfully.")
+                return True
+        except IOError as e:
+            msg = "{} not found. Original path: {}".format(annotation_file,session_info)
+            print(msg)
+            self.missing_file.append(session_info)
+            return False
+        return False
+        
 
     def wav2MFCC(self,tablename_MFCC,session_info,newpath,language,iteration,total_files):
-        print("Newpath for MFCC extraction: {}".format(newpath))
         dataset_group = random.choice([1,1,1,1,1,1,2,2,3,3])
         waves_list = []
         for w in glob.glob(newpath+'**/*.wav',recursive=True):
@@ -159,7 +167,6 @@ class Speech_Data():
         if len(waves_list) > 0:
             for k in range(len(waves_list)):
                 wav = waves_list[k]
-                print(wav)
                 feature,sr,noise_scale = self.parser(wav)
                 wav_name = str(Path(wav).name)
                 self.insert_data(tablename_MFCC,session_info+'_'+wav_name,feature, sr, noise_scale,dataset_group,language)
@@ -175,7 +182,7 @@ class Speech_Data():
         else:
             update_nowave_inzip = "No .wav files found in zipfile: {}".format(session_info)
             print(update_nowave_inzip)
-        shutil.rmtree(newpath)
+        
         
     def collect_tgzfiles(self):
         tgz_list = []
@@ -196,16 +203,18 @@ class Speech_Data():
         if len(tgz_list)>0:
             tmp_path = '/tmp/annotations'
             for t in range(len(tgz_list)):
-                self.extract(tgz_list[t],extract_path = tmp_path)
                 session_info = Path(tgz_list[t])
                 session_name = "'{}'".format(session_info)
                 #print("Path: {}".format(session_info.parts))
                 language = session_info.parts[0]
                 #print("Language label: {}".format(language))
-                session_id = os.path.splitext(session_info.parts[1])[0]
+                session_id = os.path.splitext(session_info.name)[0]
                 #print("session ID: {}".format(session_id))
                 newpath = "{}/{}/".format(tmp_path,session_id)
-                self.annotations2IPA(tablename_IPA,session_name,newpath,language)
-                self.wav2MFCC(tablename_MFCC,session_name,newpath,language,t,len(tgz_list))
-            return True
-        return False
+                self.extract(tgz_list[t],extract_path = tmp_path)
+                annotated = self.annotations2IPA(tablename_IPA,session_name,newpath,language)
+                if annotated is not False:
+                    self.wav2MFCC(tablename_MFCC,session_name,newpath,language,t,len(tgz_list))
+                shutil.rmtree(tmp_path)
+            return True, self.missing_file
+        return False, self.missing_file

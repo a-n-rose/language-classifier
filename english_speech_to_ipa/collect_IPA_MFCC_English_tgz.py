@@ -69,11 +69,12 @@ if __name__ == '__main__':
         tgz_list = spdata.collect_tgzfiles()
 
         #collect annotations and save to database
-        collected = spdata.tgz_2_IPA_MFCC(tgz_list,tablename_annotations,tablename_mfcc)
+        collected, missing_files = spdata.tgz_2_IPA_MFCC(tgz_list,tablename_annotations,tablename_mfcc)
         
         if collected:
             print("Annotations and MFCCs have been collected.")
         
+        logging.info("Zipfiles without annotation file (and therefore not included): \n{}".format(missing_files))
         
         elapsed_time_hours = (time.time()-prog_start)/3600
         timepassed_message = 'Elapsed time in hours: {}'.format(elapsed_time_hours)

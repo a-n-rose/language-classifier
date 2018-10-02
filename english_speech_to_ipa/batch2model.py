@@ -58,7 +58,7 @@ if __name__=="__main__":
     table_final = '{}_{}mfcc_noise{}_ipawindow{}_ipashift{}_overlap{}_ipastress{}_datasets{}batches'.format(language,num_mfcc,noise_doc,ipa_window,ipa_shift,overlap,ipa_stress,sequence_size)
     
     #model name:
-    model_name = '{}model_{}_speech2ipa_mfccWnoise{}_ipawindow{}_ipashift{}_overlap{}_ipastress{}_MFCCsequences{}_{}'.format(model,language,noise_doc,ipa_window, ipa_shift, overlap,ipa_stress, sequence_size,date)
+    model_name = '{}model_{}_speech2ipa_{}mfccWnoise{}_ipawindow{}_ipashift{}_overlap{}_ipastress{}_MFCCsequences{}_{}'.format(model,language,num_mfcc,noise_doc,ipa_window, ipa_shift, overlap,ipa_stress, sequence_size,date)
     
     
     db = Connect_db(database,table_ipa,table_mfcc,table_final)

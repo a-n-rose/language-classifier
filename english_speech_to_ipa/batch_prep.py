@@ -13,6 +13,8 @@ class Batch_Data:
             self.ipa = data_ipa
         if data_mfcc is not None:
             self.mfcc = data_mfcc
+            self.num_mfcc = data_mfcc.shape[1] - 5 #5 stand for the last columns: filename, noisegroup, noiselevel, dataset, label
+            print(self.num_mfcc)
         
     def train_val_test(self,train=None,validate=None,test=None):
         if train == None and validate == None and test == None:
@@ -54,7 +56,7 @@ class Batch_Data:
 
 
     def remove_spaces_etc(self,list_or_string):
-        if self.ipa_chars_only == True:
+        if self.ipa_stress == False:
             remove = [' ','\n','ˌ','ˈ','ː','̩']
         else:
             remove = [' ','\n']
@@ -111,13 +113,13 @@ class Batch_Data:
         self.dict_classes = dict_classes
         return self
 
-    def doc_ipa_present(self,ipa_window,ipa_shift,ipa_chars_only=False):
+    def doc_ipa_present(self,ipa_window,ipa_shift,ipa_stress=True):
         if ipa_shift > ipa_window:
             raise ShiftLargerThanWindowError("The shift cannot exceed the size of the window of IPA characters.")
         self.ipa_window = ipa_window
         self.ipa_shift = ipa_shift
         #for documentation purposes... probs not necessary
-        self.ipa_chars_only = ipa_chars_only
+        self.ipa_stress = ipa_stress
         if self.ipa_shift < self.ipa_window:
             self.overlap = True
         else:
@@ -183,10 +185,10 @@ class Batch_Data:
         num_ipa = len(annotation_ipa)
         mfcc_id = self.get_tgz_name(recording_session,wavefile)
         #get mfcc data, and align w ipa data
-        mfcc_indices = np.where(self.mfcc[:,40]==mfcc_id)
+        mfcc_indices = np.where(self.mfcc[:,self.num_mfcc]==mfcc_id)
         if len(mfcc_indices[0]) == 0:
             raise MFCCdataNotFoundError("No MFCC data found that matches the session ID.")
-        mfcc = self.mfcc[mfcc_indices,:40]
+        mfcc = self.mfcc[mfcc_indices,:self.num_mfcc]
         #remove unnecessary 1st dimension. e.g. (1,230,40) --> (230,40)
         mfcc = mfcc.reshape(mfcc.shape[1],mfcc.shape[2])
         
@@ -195,7 +197,7 @@ class Batch_Data:
         num_mfcc = mfcc.shape[0] #number of mfcc samples for the entire speech sample/annotation
         num_features = mfcc.shape[1] #e.g. 40 MFCC features per MFCC sample
         num_mfcc_per_ipa = num_mfcc//num_ipa #Loose alignment of MFCC samples to IPA character; work-around for not having aligned annotations
-        batch_mfcc = num_mfcc_per_ipa*3 #want to ID 3-character IPA label for the MFCC data corresponding to those 3 characters. Each batch contains num MFCC samples for 3 IPA characters (appx)
+        batch_mfcc = num_mfcc_per_ipa*self.ipa_window #want to ID 3-character IPA label for the MFCC data corresponding to those 3 characters. Each batch contains num MFCC samples for 3 IPA characters (appx)
     
         #figure out how many batches of MFCC data I have for the total number of IPA chars
 

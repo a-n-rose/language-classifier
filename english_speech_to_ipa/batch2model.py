@@ -29,63 +29,53 @@ script_purpose = 'trainmodel_ipamfcc_english' #will name logfile
 current_filename = os.path.basename(__file__)
 session_name = get_date() #make sure this session has a unique identifier - link to model name and logging information
 
+date = get_date()
+model = 'LSTM'
+language= 'english'
+noise_doc = True # False
+num_mfcc = 13 # 40
+ipa_window = 3
+ipa_shift = ipa_window #(if equal to ipa_window, no overlap)
+overlap = ipa_shift < ipa_window
+ipa_stress = True # False (if stress characters should be included or not)
+sequence_size = 20
+
 
 if __name__=="__main__":
     start_logging(script_purpose)
     prog_start = time.time()
     logging.info(prog_start)
     
-    database = 'speech_withoutnoise_ipa_mfcc.db'
+    database='speech_noise_{}_ipa_{}mfcc.db'.format(noise_doc, num_mfcc)
     table_ipa = 'speech_as_ipa'
     table_mfcc = 'speech_as_mfcc'
     
-    #IMPORTANT VARIABLES:
-    ipa_window = 3
-    window_shift = 1
-    ipa_chars_only = False
-    batch_size = 20
-    num_mfcc = 40
-    withnoise = False
+    msg_variables = "Window size: {}\nShift size: {}\nBatch size (num sequences): {}\nIPA stress included: {}\nNumber of features: {}\nNoise added to features: {}".format(ipa_window,ipa_shift, sequence_size,ipa_stress,num_mfcc,noise_doc)
+    print(msg_variables)
+    logging.info(msg_variables)
     
-    print("Window size: {}\nShift size: {}\nBatch size (num sequences): {}\nIPA characters only: {}\nNumber of features: {}\nNoise added to features: {}".format(ipa_window,window_shift, batch_size,ipa_chars_only,num_mfcc,withnoise))
-    logging.info("Window size: {}\nShift size: {}\nBatch size (num sequences): {}\nIPA characters only: {}\nNumber of features: {}\nNoise added to features: {}".format(ipa_window,window_shift, batch_size,ipa_chars_only,num_mfcc,withnoise))
+    #table where data will be pulled from 
+    table_final = '{}_{}mfcc_noise{}_ipawindow{}_ipashift{}_overlap{}_ipastress{}_datasets{}batches'.format(language,num_mfcc,noise_doc,ipa_window,ipa_shift,overlap,ipa_stress,sequence_size)
     
-    #table where combined datasets will be saved
+    #model name:
+    model_name = '{}model_{}_speech2ipa_mfccWnoise{}_ipawindow{}_ipashift{}_overlap{}_ipastress{}_MFCCsequences{}_{}'.format(model,language,noise_doc,ipa_window, ipa_shift, overlap,ipa_stress, sequence_size,date)
     
-    #VARIOUS TABLES TO CHOOSE FROM:
-    
-    #WITHOUT NOISE 
-    #english_40mfcc_withoutnoise_ipawindow3_ipashift1_1label_datasets20batches_idclasses_ipacharsonlyfalse
-    #english_40mfcc_withoutnoise_ipawindow3_ipashift1_1label_datasets20batches_idclasses_ipacharsonlytrue
-    #english_40mfcc_withoutnoise_ipawindow3_ipashift3_1label_datasets20batches_idclasses_ipacharsonlyfalse
-    #english_40mfcc_withoutnoise_ipawindow3_ipashift3_1label_datasets20batches_idclasses_ipacharsonlytrue
-    
-    
-    #table w win=3,shift=3,ipacharsonly=false
-    #table_final = 'english_40mfcc_ipawindow3_ipashift3_1label_datasets20batches_idclasses'
-    
-    ##table w win=3,shift=1,ipacharsonly=False
-    #table_final = 'english_40mfcc_ipawindow3_ipashift1_1label_datasets20batches_idclasses_ipacharso'
-    
-    ##table w win=3 shift=1, ipacharsonly=True
-    #table_final = 'english_40mfcc_ipawindow3_ipashift1_1label_datasets20batches_idclasses_ipacharsonly'
-    
-    #table w win=3 shift=3, ipacharsonly=True
-    #table_final = 'english_40mfcc_ipawindow3_ipashift1_1label_datasets20batches_idclasses_ipacharsonly'
-    
-    
-    table_final = "english_40mfcc_withoutnoise_ipawindow3_ipashift{}_1label_datasets20batches_idclasses_ipacharsonly{}".format(window_shift, str(ipa_chars_only).lower())
     
     db = Connect_db(database,table_ipa,table_mfcc,table_final)
 
     db_msg = "Database where data is pulled from: {}".format(database)
     tb_msg = "Table where data is pulled from: {}".format(table_final)
+    tb_ipa_msg = "Table where IPA characters is pulled from: {}".format(table_ipa)
+    model_saved = "Model will be saved as: {}".format(model_name)
     
     logging.info(db_msg)
     logging.info(tb_msg)
+    logging.info(tb_ipa_msg)
+    logging.info(model_saved)
     print(db_msg)
     print(tb_msg)
-    
+    print(tb_ipa_msg)
+    print(model_saved)
 
     try: 
         #The following commands allow me to know how many classes of IPA combinations I have and such.
@@ -101,10 +91,10 @@ if __name__=="__main__":
         
         #get IPA values given ipa window and shift (how many classes I have)        
 
-        ipa_list,num_classes_local,num_classes_total = bp.doc_ipa_present(ipa_window,window_shift,ipa_chars_only=ipa_chars_only)
+        ipa_list,num_classes_local,num_classes_total = bp.doc_ipa_present(ipa_window,ipa_shift,ipa_stress=ipa_stress)
         #define batches... just to be sure
 
-        bp.def_batch(batch_size)
+        bp.def_batch(sequence_size)
         logging.info("Number of classes in dataset: {}".format(num_classes_local))
         logging.info("Number of total possible classes (various combinations of IPA characters in sets of 3): {}".format(num_classes_total))
 
@@ -188,8 +178,8 @@ if __name__=="__main__":
         
         ############ Save the model ############
         
-        date = get_date()
-        model_name = 'engspeech2ipa_{}'.format(date)
+        
+        
         logging.info('Saving Model ')
         model_json = model.to_json()
         with open(model_name+'.json','w') as json_file:
@@ -224,8 +214,8 @@ if __name__=="__main__":
         logging.error("MFCCdataNotFoundError: {}".format(e))
     except Error as e:
         logging.error("Database error: {}".format(e))
-    except SystemExit:
-        logging.error("SystemExit: Had to exit program early.")
+    except SystemExit as e:
+        logging.error("SystemExit: {}".format(e))
     #Close database connections:
     finally:
         db.close_conn()

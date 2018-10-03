@@ -12,7 +12,12 @@ These scripts do the following:
 
 I hope this makes sense.. I will explain this in more detail in my <a href="">blog</a>.
 
+## Requirements
+* Espeak
+* All other requirements for the language classifier (e.g. Numpy, Pandas, Keras, etc.)
+
 ## ToDo
 * Improve progress documentation in commandline
 * Improve logging and printing statements in general 
-* Test how the model trains on speech MFCC data without added noise
+* Add embedding layer
+* Apply models to new "real-world" speech (not from where original data was pulled)

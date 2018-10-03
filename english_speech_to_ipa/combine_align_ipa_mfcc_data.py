@@ -21,7 +21,7 @@ session_name = get_date() #make sure this session has a unique identifier - link
 
 language= 'english'
 noise_doc = True # False
-num_mfcc = 13 # 40
+num_mfcc = 40 # 13  40
 ipa_window = 3
 ipa_shift = ipa_window #(if equal to ipa_window, no overlap)
 overlap = ipa_shift < ipa_window
@@ -38,7 +38,7 @@ if __name__=="__main__":
     table_ipa = 'speech_as_ipa'
     table_mfcc = 'speech_as_mfcc'
     #table where combined datasets will be saved
-    table_final = '{}_{}mfcc_noise{}_ipawindow{}_ipashift{}_overlap{}_ipastress{}_datasets{}batches'.format(language,num_mfcc,noise_doc,ipa_window,ipa_shift,overlap,ipa_stress,sequence_size)
+    table_final = '{}_{}mfcc_noise{}_ipawindow{}_ipashift{}_overlap{}_datasets{}batches_1'.format(language,num_mfcc,noise_doc,ipa_window,ipa_shift,overlap,sequence_size)
     db = Connect_db(database,table_ipa,table_mfcc,table_final)
 
     
@@ -55,7 +55,7 @@ if __name__=="__main__":
         data_ipa = db.sqldata2df(db.table_ipa,limit=1000000)
         
         logging.info("Loaded data from table {}".format(table_ipa))
-        data_mfcc = db.sqldata2df(db.table_mfcc,limit=1000000)
+        data_mfcc = db.sqldata2df(db.table_mfcc,limit=1000000) #1 mill MFCC rows = appx. 2.7 hours
         logging.info("Loaded data from {}".format(db.table_mfcc))
 
         x_ipa = data_ipa.values
@@ -67,6 +67,8 @@ if __name__=="__main__":
         #logging.info("Number of total classes: {}".format(num_classes))
         print("Number of local classes: {}".format(num_classes))
         print("Number of total possible classes: {}".format(num_classes_total))
+        logging.info("Number of local classes: {}".format(num_classes))
+        logging.info("Number of total possible classes: {}".format(num_classes_total))
 
         #set up train,validate,test data
         #default settings result in data categorized so: 60% train, 20% validate, 20% train
@@ -96,10 +98,18 @@ if __name__=="__main__":
                 count2 += 1
                 update = "Completing row {} out of {}".format(count2,len(batch_item[0]))
                 batch_row, total_row_batches = bp.generate_batch(row,batch_item[1])
+                if total_row_batches:
+                    logging.info("Now saving data to database.")
+                    db.databatch2sql(batch_row)
+                    msg_success = "Batch successfully added to database."
+                    logging.info(msg_success)
+                    print(msg_success)
+                else:
+                    msg_nomfccid = "No corresponding MFCC ID was found. Batch not created this round: round {}".format(count2)
+                    print(msg_nomfccid)
+                    logging.info(msg_nomfccid)
                 logging.info("Completed batch of row {}".format(count2))
-                logging.info("Now saving data to database.")
-                db.databatch2sql(batch_row)
-                percent_thru = "Data successfully saved. {}% Through dataset {} of {}".format(count2/len(batch_item[0])*100,count,len(ipa_datasets))
+                percent_thru = "{}% Through dataset {} of {}".format(count2/len(batch_item[0])*100,count,len(ipa_datasets))
                 print(percent_thru)
                 logging.info(percent_thru)
         prog_end = time.time()

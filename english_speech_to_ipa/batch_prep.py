@@ -184,63 +184,68 @@ class Batch_Data:
         annotation_ipa = self.remove_spaces_etc(ipa[3])
         num_ipa = len(annotation_ipa)
         mfcc_id = self.get_tgz_name(recording_session,wavefile)
-        #get mfcc data, and align w ipa data
-        mfcc_indices = np.where(self.mfcc[:,self.num_mfcc]==mfcc_id)
-        if len(mfcc_indices[0]) == 0:
-            raise MFCCdataNotFoundError("No MFCC data found that matches the session ID.")
-        mfcc = self.mfcc[mfcc_indices,:self.num_mfcc]
-        #remove unnecessary 1st dimension. e.g. (1,230,40) --> (230,40)
-        mfcc = mfcc.reshape(mfcc.shape[1],mfcc.shape[2])
+        try:
+            #get mfcc data, and align w ipa data
+            mfcc_indices = np.where(self.mfcc[:,self.num_mfcc]==mfcc_id)
+            if len(mfcc_indices[0]) == 0:
+                raise MFCCdataNotFoundError("No MFCC data found that matches the session ID.")
+            mfcc = self.mfcc[mfcc_indices,:self.num_mfcc]
+            #remove unnecessary 1st dimension. e.g. (1,230,40) --> (230,40)
+            mfcc = mfcc.reshape(mfcc.shape[1],mfcc.shape[2])
+            
+            #ALIGNING SPEECH INFORMATION TO ANNOTATION
+            #WORKAROUND FOR NOT HAVING ALIGNED ANNOTATIONS
+            num_mfcc = mfcc.shape[0] #number of mfcc samples for the entire speech sample/annotation
+            num_features = mfcc.shape[1] #e.g. 40 MFCC features per MFCC sample
+            num_mfcc_per_ipa = num_mfcc//num_ipa #Loose alignment of MFCC samples to IPA character; work-around for not having aligned annotations
+            batch_mfcc = num_mfcc_per_ipa*self.ipa_window #want to ID 3-character IPA label for the MFCC data corresponding to those 3 characters. Each batch contains num MFCC samples for 3 IPA characters (appx)
         
-        #ALIGNING SPEECH INFORMATION TO ANNOTATION
-        #WORKAROUND FOR NOT HAVING ALIGNED ANNOTATIONS
-        num_mfcc = mfcc.shape[0] #number of mfcc samples for the entire speech sample/annotation
-        num_features = mfcc.shape[1] #e.g. 40 MFCC features per MFCC sample
-        num_mfcc_per_ipa = num_mfcc//num_ipa #Loose alignment of MFCC samples to IPA character; work-around for not having aligned annotations
-        batch_mfcc = num_mfcc_per_ipa*self.ipa_window #want to ID 3-character IPA label for the MFCC data corresponding to those 3 characters. Each batch contains num MFCC samples for 3 IPA characters (appx)
-    
-        #figure out how many batches of MFCC data I have for the total number of IPA chars
+            #figure out how many batches of MFCC data I have for the total number of IPA chars
 
-        #make sure there is a total of 3 IPA characters (or the size of the window) per input (don't end up with with only 1 IPA character as classification sequence)
-        annotation_ipa,num_ipa = self.align_list(annotation_ipa)
+            #make sure there is a total of 3 IPA characters (or the size of the window) per input (don't end up with with only 1 IPA character as classification sequence)
+            annotation_ipa,num_ipa = self.align_list(annotation_ipa)
+                
+                
+            total_batches = int(num_ipa/self.ipa_shift - (self.ipa_window - self.ipa_shift))
+            #create skeleton for where batches will be collected
+            #1 is added for label column; another for dataset column
+            batch = np.zeros(shape=(total_batches,self.batch_size,num_features+1+1))
             
+            for batch_iter in range(total_batches):
+                start = batch_iter * (num_mfcc_per_ipa * self.ipa_shift) #shifting at indicated shift length (e.g. if ipa_shift = 1, then shift 1 letter at a time)
+                #Ensure the input batchsizes match what is expected:
+                if batch_mfcc <= self.batch_size:
+                    end = start + batch_mfcc #window of __ letters
+                else:
+                    over = batch_mfcc - self.batch_size
+                    end = start + batch_mfcc - over
+                if end > len(mfcc):
+                    end = len(mfcc)
+                index_ipa = batch_iter * self.ipa_shift
+                ipa_label = annotation_ipa[index_ipa:index_ipa+self.ipa_window]
+                #print(ipa_label)
+                ipa_id = self.get_label_id(ipa_label)
+                #print(ipa_id)
+                batch_input = mfcc[start:end,:]
+                len_mfccs = len(batch_input)
+                add_label = np.repeat([ipa_id],len_mfccs,axis=0)
+                if batch_input.shape[0] < self.batch_size:
+                    diff = self.batch_size - batch_input.shape[0]
+                    pad_zeros = np.zeros(shape=(diff,batch_input.shape[1]))
+                    batch_input = np.r_[batch_input,pad_zeros]
+                    add_zeros = np.repeat([0],diff,axis=0)
+                    add_label = np.r_[add_label,add_zeros]
+                #include either 'train', 'validate', 'test' label (i.e. 1,2,3, respectively):
+                add_dataset_label = np.repeat([dataset_label_int],len(batch_input),axis=0)
+                batch_input = np.c_[add_dataset_label,batch_input,add_label]
+                #batch_input = np.c_[batch_input,add_ints]
+                batch[batch_iter]=batch_input
             
-        total_batches = int(num_ipa/self.ipa_shift - (self.ipa_window - self.ipa_shift))
-        #create skeleton for where batches will be collected
-        #1 is added for label column; another for dataset column
-        batch = np.zeros(shape=(total_batches,self.batch_size,num_features+1+1))
-        
-        for batch_iter in range(total_batches):
-            start = batch_iter * (num_mfcc_per_ipa * self.ipa_shift) #shifting at indicated shift length (e.g. if ipa_shift = 1, then shift 1 letter at a time)
-            #Ensure the input batchsizes match what is expected:
-            if batch_mfcc <= self.batch_size:
-                end = start + batch_mfcc #window of __ letters
-            else:
-                over = batch_mfcc - self.batch_size
-                end = start + batch_mfcc - over
-            if end > len(mfcc):
-                end = len(mfcc)
-            index_ipa = batch_iter * self.ipa_shift
-            ipa_label = annotation_ipa[index_ipa:index_ipa+self.ipa_window]
-            #print(ipa_label)
-            ipa_id = self.get_label_id(ipa_label)
-            #print(ipa_id)
-            batch_input = mfcc[start:end,:]
-            len_mfccs = len(batch_input)
-            add_label = np.repeat([ipa_id],len_mfccs,axis=0)
-            if batch_input.shape[0] < self.batch_size:
-                diff = self.batch_size - batch_input.shape[0]
-                pad_zeros = np.zeros(shape=(diff,batch_input.shape[1]))
-                batch_input = np.r_[batch_input,pad_zeros]
-                add_zeros = np.repeat([0],diff,axis=0)
-                add_label = np.r_[add_label,add_zeros]
-            #include either 'train', 'validate', 'test' label (i.e. 1,2,3, respectively):
-            add_dataset_label = np.repeat([dataset_label_int],len(batch_input),axis=0)
-            batch_input = np.c_[add_dataset_label,batch_input,add_label]
-            #batch_input = np.c_[batch_input,add_ints]
-            batch[batch_iter]=batch_input
-        
-        return batch, total_batches
+            return batch, total_batches
+        except MFCCdataNotFoundError:
+            pass
+        return None, None
+    
     
     def retrieve_ipa_keys(self,ipa_list):
         ipa_keys = []

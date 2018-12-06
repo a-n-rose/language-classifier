@@ -5,6 +5,10 @@ import random
 import traceback
 import math
 
+#for the model
+from keras.models import Sequential
+from keras.layers import Dense, Conv2D, Flatten
+
 #import data
 #separate into male and female (similar to the study I'm comparing findings with)
 
@@ -166,8 +170,6 @@ def shape4convnet(data_features_labels_matrix,context_window_size=None):
     X = features.reshape(num_frame_sets,context_window_size*2+1,features.shape[1],1)
     y_indices = list(range(0,len(labels),19))
     y = labels[y_indices]
-    #print(set(labels))
-    #print(y)
 
     return X, y
     
@@ -180,7 +182,10 @@ if __name__=="__main__":
         train_f, val_f, test_f = prep_data_4_model("female")
         train_m, val_m, test_m = prep_data_4_model("male")
         
-        #reshape data to fit model
+        #done collecting data, close database
+        conn.close()
+        
+        #reshape data to fit model 
         X_f_train, y_f_train = shape4convnet(train_f)
         X_f_val, y_f_val = shape4convnet(val_f)
         X_f_test, y_f_test = shape4convnet(test_f)
@@ -188,6 +193,66 @@ if __name__=="__main__":
         X_m_train, y_m_train = shape4convnet(train_m)
         X_m_val, y_m_val = shape4convnet(val_m)
         X_m_test, y_m_test = shape4convnet(test_m)
+
+
+        print("Training ConvNet on FEMALE speech data")
+        #FEMALE SPEECH
+        #now create model
+        model_f = Sequential()
+        model_f.add(Conv2D(64, kernel_size=3, activation='relu', input_shape=(19,120,1)))
+        model_f.add(Conv2D(32, kernel_size=3, activation='relu'))
+        model_f.add(Flatten())
+        model_f.add(Dense(1,activation='sigmoid'))
+        
+        #compile model
+        model_f.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+        
+        #train model
+        model_f.fit(X_f_train, y_f_train, validation_data=(X_f_val,y_f_val),epochs=100)
+        
+        #predict test data
+        pred = model_f.predict(X_f_test)
+        pred = pred >0.5
+        pred = pred.astype(float)
+        
+        #see how many were correct
+        correct = 0
+        for i, item in enumerate(y_f_test):
+            if item == pred[i]:
+                correct += 1
+        score = round(correct/float(len(y_f_test)) * 100, 2)
+        print("model earned a score of {}%  for the test data.".format(score))
+        
+        
+        
+        print("Training ConvNet on MALE speech data")
+        #MALE SPEECH
+        #now create model
+        model_m = Sequential()
+        model_m.add(Conv2D(64, kernel_size=3, activation='relu', input_shape=(19,120,1)))
+        model_m.add(Conv2D(32, kernel_size=3, activation='relu'))
+        model_m.add(Flatten())
+        model_m.add(Dense(1,activation='sigmoid'))
+        
+        #compile model
+        model_m.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+        
+        #train model
+        model_m.fit(X_m_train, y_m_train, validation_data=(X_m_val,y_m_val),epochs=100)
+        
+        #predict test data
+        pred = model_m.predict(X_m_test)
+        pred = pred >0.5
+        pred = pred.astype(float)
+        
+        #see how many were correct
+        correct = 0
+        for i, item in enumerate(y_m_test):
+            if item == pred[i]:
+                correct += 1
+        score = round(correct/float(len(y_m_test)) * 100, 2)
+        print("model earned a score of {}%  for the test data.".format(score))
+
 
     except Exception as e:
         #I know I need to fix this... 

@@ -79,8 +79,8 @@ def limit_samples_window_size(dataframe,col_id,id_list,context_window_size):
     #need to ensure each speaker has patches sized 19
     matrix_numrows = find_new_matrix_length(dataframe,col_id,id_list,context_window_size)
     
-    spect_patches = np.empty((matrix_numrows,121)) #120 = num features + 1 label column
-    
+    spect_patches = np.zeros((matrix_numrows,121)) #120 = num features + 1 label column
+
     #add only necessary samples to train matrix 
     #remove samples that do not fit in 19 set frames
     feature_cols = list(range(1,121))
@@ -98,17 +98,22 @@ def limit_samples_window_size(dataframe,col_id,id_list,context_window_size):
         
         #get label for speaker
         label = ids_labels[indices[0],1]
-        
+
         #keep track of sample number per speaker (not more than can create full 19 frames)
         local_count = 0
         
         for index in indices:
             local_count+=1
+
             #add label to feature array - keep track of it
             new_row = np.append(features[index],label)
+
             spect_patches[row_id] = new_row
+
+            row_id += 1
             if local_count == tot_samples_needed:
                 break
+    
     return spect_patches
 
 def prep_data_4_model(sex,context_window_size = None):
@@ -159,8 +164,11 @@ def shape4convnet(data_features_labels_matrix,context_window_size=None):
         print("No extra samples found")
         
     X = features.reshape(num_frame_sets,context_window_size*2+1,features.shape[1],1)
-    y = labels.reshape(num_frame_sets,context_window_size*2+1)
-    y = y[:,0]
+    y_indices = list(range(0,len(labels),19))
+    y = labels[y_indices]
+    #print(set(labels))
+    #print(y)
+
     return X, y
     
 
@@ -176,6 +184,10 @@ if __name__=="__main__":
         X_f_train, y_f_train = shape4convnet(train_f)
         X_f_val, y_f_val = shape4convnet(val_f)
         X_f_test, y_f_test = shape4convnet(test_f)
+        
+        X_m_train, y_m_train = shape4convnet(train_m)
+        X_m_val, y_m_val = shape4convnet(val_m)
+        X_m_test, y_m_test = shape4convnet(test_m)
 
     except Exception as e:
         #I know I need to fix this... 

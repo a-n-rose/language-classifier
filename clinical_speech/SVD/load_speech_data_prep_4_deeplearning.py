@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import random
 import traceback
-
+import math
 
 #import data
 #separate into male and female (similar to the study I'm comparing findings with)
@@ -42,7 +42,6 @@ def split_train_val_test(speaker_ids,perc_train=None,perc_val=None,perc_test=Non
     
     randomly_assigned_conditions = np.concatenate((train,val,test))
     random.shuffle(randomly_assigned_conditions)
-    print(randomly_assigned_conditions)
     
     train_speakers = []
     val_speakers = []
@@ -54,10 +53,7 @@ def split_train_val_test(speaker_ids,perc_train=None,perc_val=None,perc_test=Non
         diff = num_speakers - len(randomly_assigned_conditions)
         for j in range(diff):
             rand_choice = np.random.choice([0,1,2],p=[0.8,0.1,0.1])
-            print(randomly_assigned_conditions)
             randomly_assigned_conditions=np.append(randomly_assigned_conditions,rand_choice) 
-            print(rand_choice)
-            print(randomly_assigned_conditions)
     for i in range(num_speakers):
 
         if randomly_assigned_conditions[i] == 0:
@@ -69,7 +65,55 @@ def split_train_val_test(speaker_ids,perc_train=None,perc_val=None,perc_test=Non
     return train_speakers, val_speakers, test_speakers
 
 
-def prep_data_4_model(sex):
+def find_new_matrix_length(dataframe,col_id,speaker_ids,context_window_size):
+    total_samples_sum = 0
+    for speaker in speaker_ids:
+        num_samples = sum(dataframe[col_id]==speaker)
+        num_patches = num_samples//(context_window_size*2+1)
+        total_samples_needed = (context_window_size*2+1)*num_patches
+        total_samples_sum += total_samples_needed
+    return total_samples_sum
+
+
+def limit_samples_window_size(dataframe,col_id,id_list,context_window_size):
+    #need to ensure each speaker has patches sized 19
+    matrix_numrows = find_new_matrix_length(dataframe,col_id,id_list,context_window_size)
+    
+    spect_patches = np.empty((matrix_numrows,121)) #120 = num features + 1 label column
+    
+    #add only necessary samples to train matrix 
+    #remove samples that do not fit in 19 set frames
+    feature_cols = list(range(1,121))
+    features = dataframe.loc[:,feature_cols].values
+    id_cols = [121,123]
+    ids_labels = dataframe.loc[:,id_cols].values
+    row_id = 0
+    for speaker in id_list:
+        equal_speaker = ids_labels[:,0] == speaker
+        indices = np.where(equal_speaker)[0]
+        
+        num_samples = len(indices)
+        max_sets = num_samples//(context_window_size*2+1)
+        tot_samples_needed = max_sets * (context_window_size*2+1)
+        
+        #get label for speaker
+        label = ids_labels[indices[0],1]
+        
+        #keep track of sample number per speaker (not more than can create full 19 frames)
+        local_count = 0
+        
+        for index in indices:
+            local_count+=1
+            #add label to feature array - keep track of it
+            new_row = np.append(features[index],label)
+            spect_patches[row_id] = new_row
+            if local_count == tot_samples_needed:
+                break
+    return spect_patches
+
+def prep_data_4_model(sex,context_window_size = None):
+    if context_window_size is None:
+        context_window_size = 9
 
     data = get_speech_data(sex)
     cols = data.columns
@@ -84,18 +128,42 @@ def prep_data_4_model(sex):
     val = data[data["dataset"]==1]
     test = data[data["dataset"]==2]
     
-    X_train = train.iloc[:,1:121].values
-    y_train = train.iloc[:,-2].values
-    
-    X_val = val.iloc[:,1:121].values
-    y_val = val.iloc[:,-2].values
-    
-    X_test = test.iloc[:,1:121].values
-    y_test = test.iloc[:,-2].values
-    
-    return (X_train, y_train), (X_val, y_val), (X_test, y_test)
+    X_y_train = limit_samples_window_size(train,col_id,train_ids,context_window_size)
+    X_y_val = limit_samples_window_size(val,col_id,val_ids,context_window_size)
+    X_y_test = limit_samples_window_size(test,col_id,test_ids,context_window_size)
 
+    return X_y_train, X_y_val, X_y_test
+
+
+def shape4convnet(data_features_labels_matrix,context_window_size=None):
+    if context_window_size is None:
+        context_window_size = 9
+    #prepping shape for ConvNet. 
+    #shape = (num_spectrogram_sets/images, 19, 120, 1)
+    #num of images --> len(data_labels)
+    #size of the "image": 19 X 120  (19 frames in total, 120 features)
+    #1 --> grayscale (important for ConvNet to include)
     
+
+    #separate features from labels:
+    features = data_features_labels_matrix[:,:-1]
+    labels = data_features_labels_matrix[:,-1]
+    
+    num_frame_sets = len(data_features_labels_matrix)//(context_window_size*2+1)
+    
+    #make sure only number of samples are included to make up complete context window frames of 19 frames (if context window frame == 9, 9 before and 9 after a central frame, so 9 * 2 + 1)
+    check = len(data_features_labels_matrix)/float(context_window_size*2+1)
+    if math.modf(check)[0] != 0.0:
+        print("Extra Samples not properly removed")
+    else:
+        print("No extra samples found")
+        
+    X = features.reshape(num_frame_sets,context_window_size*2+1,features.shape[1],1)
+    y = labels.reshape(num_frame_sets,context_window_size*2+1)
+    y = y[:,0]
+    return X, y
+    
+
 if __name__=="__main__":
     try:
         conn = sqlite3.connect("healthy_dysphonia_speech.db")
@@ -104,10 +172,10 @@ if __name__=="__main__":
         train_f, val_f, test_f = prep_data_4_model("female")
         train_m, val_m, test_m = prep_data_4_model("male")
         
-        '''
-        Next: feed deep neural networks 9 context window framed data
-        First to convnet then to LSTM... but perhaps each individually first.
-        '''
+        #reshape data to fit model
+        X_f_train, y_f_train = shape4convnet(train_f)
+        X_f_val, y_f_val = shape4convnet(val_f)
+        X_f_test, y_f_test = shape4convnet(test_f)
 
     except Exception as e:
         #I know I need to fix this... 

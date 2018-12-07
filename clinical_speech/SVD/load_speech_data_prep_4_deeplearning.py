@@ -1,3 +1,13 @@
+'''
+Implementing the ConvNet and LSTM methods from the paper:
+
+Dysarthric Speech Recognition Using Convolutional LSTM Neural Network
+
+Kim, M., Cao, B., An, K., & Wang, J. (2018)
+
+'''
+
+
 import sqlite3
 import numpy as np
 import pandas as pd
@@ -7,7 +17,7 @@ import math
 
 #for the model
 from keras.models import Sequential
-from keras.layers import Dense, Conv2D, Flatten
+from keras.layers import Dense, Conv2D, Flatten, MaxPooling2D, Dropout
 
 #import data
 #separate into male and female (similar to the study I'm comparing findings with)
@@ -197,21 +207,54 @@ if __name__=="__main__":
 
         print("Training ConvNet on FEMALE speech data")
         #FEMALE SPEECH
-        #now create model
-        model_f = Sequential()
-        model_f.add(Conv2D(64, kernel_size=3, activation='relu', input_shape=(19,120,1)))
-        model_f.add(Conv2D(32, kernel_size=3, activation='relu'))
-        model_f.add(Flatten())
-        model_f.add(Dense(1,activation='sigmoid'))
+        
+        #now create models from paper:
+        
+        #TIME-FREQUENCY CONVNET
+        tfcnn = Sequential()
+        # feature maps = 40
+        # 8x4 time-frequency filter (goes along both time and frequency axes)
+        tfcnn.add(Conv2D(40, kernel_size=(8,4), activation='relu', input_shape=(19,120,1)))
+        #non-overlapping pool_size 3x3
+        tfcnn.add(MaxPooling2D(pool_size=(3,3)))
+        tfcnn.add(Flatten())
+        tfcnn.add(Dense(1,activation="sigmoid"))
+        
+        
+        #TIME CONVNET
+        tcnn = Sequential()
+        # feature maps = 30
+        # 1x4 time filter (goes along time axis)
+        tcnn.add(Conv2D(30, kernel_size=(1,4), activation="relu",input_shape=(19,120,1)))
+        # non-overlapping maxpooling w size of 3
+        tcnn.add(MaxPooling2D(pool_size=3))
+        tcnn.add(Flatten())
+        tcnn.add(Dense(1,activation="sigmoid"))
+        
+        
+        #FREQUENCY CONVNET
+        fcnn = Sequential()
+        # feature maps = 30
+        # 8x1 frequency filter (goes along frequency axis)
+        fcnn.add(Conv2D(90, kernel_size=(8,1), activation="relu",input_shape=(19,120,1)))
+        # non-overlapping maxpooling w size of 3
+        fcnn.add(MaxPooling2D(pool_size=3))
+        fcnn.add(Flatten())
+        fcnn.add(Dense(1,activation="sigmoid"))
+        
+
+        print(tfcnn.summary())
+        print(tcnn.summary())
+        print(fcnn.summary())
         
         #compile model
-        model_f.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+        fcnn.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
         
         #train model
-        model_f.fit(X_f_train, y_f_train, validation_data=(X_f_val,y_f_val),epochs=100)
+        fcnn.fit(X_f_train, y_f_train, validation_data=(X_f_val,y_f_val),epochs=50)
         
         #predict test data
-        pred = model_f.predict(X_f_test)
+        pred = fcnn.predict(X_f_test)
         pred = pred >0.5
         pred = pred.astype(float)
         
@@ -221,36 +264,6 @@ if __name__=="__main__":
             if item == pred[i]:
                 correct += 1
         score = round(correct/float(len(y_f_test)) * 100, 2)
-        print("model earned a score of {}%  for the test data.".format(score))
-        
-        
-        
-        print("Training ConvNet on MALE speech data")
-        #MALE SPEECH
-        #now create model
-        model_m = Sequential()
-        model_m.add(Conv2D(64, kernel_size=3, activation='relu', input_shape=(19,120,1)))
-        model_m.add(Conv2D(32, kernel_size=3, activation='relu'))
-        model_m.add(Flatten())
-        model_m.add(Dense(1,activation='sigmoid'))
-        
-        #compile model
-        model_m.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
-        
-        #train model
-        model_m.fit(X_m_train, y_m_train, validation_data=(X_m_val,y_m_val),epochs=100)
-        
-        #predict test data
-        pred = model_m.predict(X_m_test)
-        pred = pred >0.5
-        pred = pred.astype(float)
-        
-        #see how many were correct
-        correct = 0
-        for i, item in enumerate(y_m_test):
-            if item == pred[i]:
-                correct += 1
-        score = round(correct/float(len(y_m_test)) * 100, 2)
         print("model earned a score of {}%  for the test data.".format(score))
 
 

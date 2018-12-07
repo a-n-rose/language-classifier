@@ -217,6 +217,7 @@ if __name__=="__main__":
         tfcnn.add(Conv2D(40, kernel_size=(8,4), activation='relu', input_shape=(19,120,1)))
         #non-overlapping pool_size 3x3
         tfcnn.add(MaxPooling2D(pool_size=(3,3)))
+        tfcnn.add(Dropout(0.25))
         tfcnn.add(Flatten())
         tfcnn.add(Dense(1,activation="sigmoid"))
         
@@ -228,6 +229,7 @@ if __name__=="__main__":
         tcnn.add(Conv2D(30, kernel_size=(1,4), activation="relu",input_shape=(19,120,1)))
         # non-overlapping maxpooling w size of 3
         tcnn.add(MaxPooling2D(pool_size=3))
+        tcnn.add(Dropout(0.25))
         tcnn.add(Flatten())
         tcnn.add(Dense(1,activation="sigmoid"))
         
@@ -239,6 +241,7 @@ if __name__=="__main__":
         fcnn.add(Conv2D(90, kernel_size=(8,1), activation="relu",input_shape=(19,120,1)))
         # non-overlapping maxpooling w size of 3
         fcnn.add(MaxPooling2D(pool_size=3))
+        fcnn.add(Dropout(0.25))
         fcnn.add(Flatten())
         fcnn.add(Dense(1,activation="sigmoid"))
         
@@ -248,13 +251,13 @@ if __name__=="__main__":
         print(fcnn.summary())
         
         #compile model
-        fcnn.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+        tfcnn.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
         
         #train model
-        fcnn.fit(X_f_train, y_f_train, validation_data=(X_f_val,y_f_val),epochs=50)
+        tfcnn.fit(X_f_train, y_f_train, validation_data=(X_f_val,y_f_val),epochs=50)
         
         #predict test data
-        pred = fcnn.predict(X_f_test)
+        pred = tfcnn.predict(X_f_test)
         pred = pred >0.5
         pred = pred.astype(float)
         

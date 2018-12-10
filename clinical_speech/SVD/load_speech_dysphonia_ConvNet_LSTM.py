@@ -18,7 +18,7 @@ import math
 
 #for the model
 from keras.models import Sequential
-from keras.layers import Dense, Conv2D, Flatten, LSTM, MaxPooling2D, Dropout, SimpleRNN, Reshape, TimeDistributed, Activation, ZeroPadding2D
+from keras.layers import Dense, Conv2D, Flatten, LSTM, MaxPooling2D, Dropout, TimeDistributed
 
 #to catch errors I think might happen
 from errors import TotalSamplesNotAlignedSpeakerSamples
